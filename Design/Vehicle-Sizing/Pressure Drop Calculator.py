@@ -45,7 +45,7 @@ def fluid_properties(inputfluid):
     
     return density,kv,sg
 
-def pressuredrop(massflow,density,area,kv,pipe_roughness,k_factor,pressure,pipe_length):
+def pressuredrop(massflow,density,area,kv,pipe_roughness,k_factor,pressure,pipe_length,inner_diameter):
     
     gravity = 32.17405 #ft/s^2 - https://www.engineeringtoolbox.com/mass-weight-d_589.html
 
@@ -109,19 +109,24 @@ def cv_calc(massflow,sg,delP,density):
     
     return Cv
 
+def exportfunc(pressure,outer_diameter,stress,fos,fluidname,massflow,k_factor,pipe_roughness,pipe_length):
+    thickness, inner_diameter, area = barlows(pressure,outer_diameter,stress,fos)
+    density, kv,sg = fluid_properties(fluidname)
+    reynolds, f, head_loss,velocity = pressuredrop(massflow,density,area,kv,pipe_roughness,k_factor,pressure,pipe_length,inner_diameter)
+    psi_change = pressure_drop_calc(pipe_length,pressure,density,velocity,head_loss)
+
+    return psi_change
+
 pressure = 1000 #psi
-outer_diameter = 0.5 #inches
+outer_diameter = 0.75 #inches
 stress = 31200 #yield strength of material, psi
 fos = 1.5 #factor of safety
 massflow = 20 #lb/s
 pipe_roughness = 0.00059055118 #converted mm to inches - http://www.enggcyclopedia.com/2011/09/absolute-roughness/
 k_factor = 6 #addition of total k-factors for valves, fitings, etc - https://www.lmnoeng.com/surface.htm
 pipe_length = 60 #total length of pipe - inches
+fluidname = lox() #change between lox(),rp1(),helium()
 
-thickness, inner_diameter, area = barlows(pressure,outer_diameter,stress,fos)
-density, kv,sg = fluid_properties(lox())
-reynolds, f, head_loss,velocity = pressuredrop(massflow,density,area,kv,pipe_roughness,k_factor,pressure,pipe_length)
-psi_change = pressure_drop_calc(pipe_length,pressure,density,velocity,head_loss)
-cv = cv_calc(massflow,sg,psi_change,density)
+press_drop = exportfunc(pressure,outer_diameter,stress,fos,fluidname,massflow,k_factor,pipe_roughness,pipe_length)
 
-print(cv)
+print(press_drop)
