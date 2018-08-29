@@ -44,10 +44,9 @@ def calculateTotalPressures(pressureDrop):
 
 def main():
     #=========MANIPULATE THESE VALUES FOR PRESSURE DROP FUNCTION===========
-    pressure = 1000 #psi
+    pressure = 1000 #Max tank pressure in psi
     stress = 31200 #yield strength of material, psi
     fos = 1.5 #factor of safety
-    massflow = 20 #lb/s
     pipe_roughness = 0.00059055118 #converted mm to inches - http://www.enggcyclopedia.com/2011/09/absolute-roughness/
     k_factor = 6 #addition of total k-factors for valves, fitings, etc - https://www.lmnoeng.com/surface.htm
     pipe_length = 60 #total length of pipe - inches
@@ -66,14 +65,15 @@ def main():
     y2 = []
 
     i = 0
+    inches = " inches"
 
     plt.figure(1)
     for pipeSize in pipeSizes:
         if(i > 0):
             plt.subplot(2,1,1)
-            plt.plot(x1,y1)
+            plt.plot(x1,y1,label=str(pipeSize)+inches)
             plt.subplot(2,1,2)
-            plt.plot(x1,y2)
+            plt.plot(x1,y2,label=str(pipeSize)+inches)
         i+=1
         del x1[:]
         del y1[:]
@@ -90,11 +90,13 @@ def main():
     plt.plot(x1,y1)
     plt.xlabel('Thrust')
     plt.ylabel('Chamber Pressure')
+    plt.legend(loc='lower left')
 
     plt.subplot(2,1,2)
     plt.plot(x1,y2)
     plt.xlabel('Thrust')
     plt.ylabel('Pressure Drop')
+    plt.legend(loc='upper left')
 
     plt.show()
 
