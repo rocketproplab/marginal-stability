@@ -19,7 +19,7 @@ def openFile(filename):
     inputData = []
     with open(filename) as myFile:
         for line in myFile:
-            inputData.append([int(x) for x in line.split()])
+            inputData.append(int(x) for x in line.split())
     return inputData
 
 #def calculateThrust(mDot,equivalentVelocity):
@@ -82,18 +82,20 @@ def main():
             mDot = calculateMassFlowRate(value,Veq)
             pD = pdc.exportfunc(pressure,pipeSize,stress,fos,fluidname,mDot,k_factor,pipe_roughness,pipe_length)
             chamberPressure = calculateTotalPressures(pD)
-            x1.append(thrustPossibilities)
+            x1.append(value)
             y1.append(chamberPressure)
             y2.append(pD)
 
     plt.subplot(2,1,1)
     plt.plot(x1,y1)
+    plt.axis([2000,5000,0,750])
     plt.xlabel('Thrust')
     plt.ylabel('Chamber Pressure')
     plt.legend(loc='lower left')
 
     plt.subplot(2,1,2)
     plt.plot(x1,y2)
+    plt.axis([2000,5000,0,750])
     plt.xlabel('Thrust')
     plt.ylabel('Pressure Drop')
     plt.legend(loc='upper left')
