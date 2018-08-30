@@ -30,7 +30,7 @@ def openFile(filename):
 def calculateMassFlowRate(thrust,equivalentVelocity):
     #Solve for mDot from equivalent velocity here: https://www.grc.nasa.gov/WWW/K-12/airplane/specimp.html
     #mDot = (exitArea * (atmosphericPressure - chamberPressure)) / (equivalentVelocity - exitVelocity)
-    mDot = thrust / equivalentVelocity
+    mDot = (thrust * g) / equivalentVelocity
     return mDot
 
 def calculateEquivalentVelocity():
