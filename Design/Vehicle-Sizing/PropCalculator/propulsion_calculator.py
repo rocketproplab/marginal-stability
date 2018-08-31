@@ -19,7 +19,8 @@ def openFile(filename):
     inputData = []
     with open(filename) as myFile:
         for line in myFile:
-            inputData.append(int(x) for x in line.split())
+            for x in line.split()
+                inputData.append(int(x))
     return inputData
 
 #def calculateThrust(mDot,equivalentVelocity):
