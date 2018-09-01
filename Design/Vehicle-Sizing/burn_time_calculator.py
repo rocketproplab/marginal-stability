@@ -4,6 +4,7 @@ import MS_TANK_SIZING_CODE as sizing
 altitudeGoal = int(input("Enter altitude goal: "))
 thrust = int(input("Enter thrust: "))
 diameter = int(input("Enter rocket diameter: "))
+initialTime = float(input("Enter initial burn time (must be overestimate): "))
 g0 = 9.8 #m/s^2 (acceleration due to gravity)
 specificImpulse = 260 #s
 of_ratio = 2.33
@@ -60,10 +61,15 @@ def heightCalc(specificImpulse, massRatio, burnTime, g0):
     hMax = ((v_e)**2 * (numpy.log(massRatio))**2 / (2 * g0)) - v_e * burnTime * ((massRatio/(massRatio - 1))*numpy.log(R) - 1)
     return hMax
 
+mdot = thrust / (specificImpulse * g0)
 sizing.changeDiam(diameter)
+M = initialTime * mdot
+rp1Mass = rp1MassCalc(M)
+loxMass = loxMassCalc(M)
+sizing.changeRP1(kgToLb(M))
+sizing.changeLOx(kgToLb(M))
 F = fixedMass()
 L = tankLength(lbToKg(sizing.m_lox + sizing.m_rp1))
-mdot = thrust / (specificImpulse * g0)
 D = dryMass(F,L)
 W = wetMass(D)
 R = massRatio(W, D)
