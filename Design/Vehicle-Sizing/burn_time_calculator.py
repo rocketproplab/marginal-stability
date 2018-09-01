@@ -68,10 +68,11 @@ propMass = t * mdot
 print("D1 = " + str(kgToLb(D)))
 print("W1 = " + str(kgToLb(W)))
 print("Old propMass = " + str(sizing.m_lox + sizing.m_rp1))
+print("R1 = " + str(R))
+print(g0 + dragAccel)
 print("t1 = " + str(t))
 print("height = " + str(heightCalc(specificImpulse, R, t, g0)))
 print("mdot = " + str(kgToLb(mdot)))
-print("new propMass = " + str(kgToLb(propMass)))
 
 for count in range(20):
     rp1Mass = rp1MassCalc(propMass)
@@ -82,11 +83,13 @@ for count in range(20):
     newW = wetMass(newD)
     newR = massRatio(newW, newD)
     dragAccel = 2*drag/(newD + newW)
-    newT = burnTime(specificImpulse, newR, g0, altitudeGoal)
-    propMass = newT * mdot
+    newT = burnTime(specificImpulse, newR, g0 + dragAccel, altitudeGoal)
     print("new propMass = " + str(kgToLb(propMass)))
     print("new D = " + str(kgToLb(newD)))
     print("new W = " + str(kgToLb(newW)))
+    print("new R = " + str(newR))
+    print(g0 + dragAccel)
     print("new T = " + str(newT))
     print("height = " + str(heightCalc(specificImpulse, newR, newT, g0)))
     print("mdot = " + str(kgToLb(mdot)))
+    propMass = newT * mdot
