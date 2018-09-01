@@ -3,9 +3,6 @@ import Pressure_Drop_Calculator as pdc
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-from Pressure_Drop_Calculator import lox
-from Pressure_Drop_Calculator import helium
-from Pressure_Drop_Calculator import rp1
 
 #=============Global variables================
 g = 32.17405 #Gravity constant in ft/s^2
@@ -19,8 +16,8 @@ def openFile(filename):
     inputData = []
     with open(filename) as myFile:
         for line in myFile:
-            for x in line.split()
-                inputData.append(int(x))
+            for i, value in enumerate(line.split()):
+                inputData.append(int(value))
     return inputData
 
 #def calculateThrust(mDot,equivalentVelocity):
@@ -44,6 +41,10 @@ def calculateTotalPressures(pressureDrop):
     return chamberPressure
 
 def main():
+    lox = pdc.lox()
+    rp1 = pdc.rp1()
+    helium = pdc.helium()
+
     #=========MANIPULATE THESE VALUES FOR PRESSURE DROP FUNCTION===========
     pressure = 1000 #Max tank pressure in psi
     stress = 31200 #yield strength of material, psi
