@@ -19,12 +19,18 @@ def kgToLb(kgMass):
 def inToM(inches):
     return inches * 2.54 / 100
 
+tankLinDen = lbToKg(sizing.wall_mass) / inToM(sizing.total_height)
+propLinDen = lbToKg(sizing.m_lox + sizing.m_rp1) / inToM(sizing.total_height)
+
 def fixedMass():
     fixedMass = 470.25 - sizing.wall_mass
     return lbToKg(fixedMass)
 
-def dryMass(fixedMass):
-    return fixedMass + lbToKg(sizing.wall_mass)
+def dryMass(fixedMass, tankLength):
+    return fixedMass + tankLinDen * tankLength
+
+def tankLength(propMass):
+    return propMass / propLinDen
 
 def wetMass(dryMass):
     return dryMass + lbToKg(sizing.m_lox) + lbToKg(sizing.m_rp1)
@@ -56,12 +62,12 @@ def heightCalc(specificImpulse, massRatio, burnTime, g0):
 
 sizing.changeDiam(diameter)
 F = fixedMass()
+L = tankLength(lbToKg(sizing.m_lox + sizing.m_rp1))
 mdot = thrust / (specificImpulse * g0)
-D = dryMass(F)
+D = dryMass(F,L)
 W = wetMass(D)
 R = massRatio(W, D)
 dragAccel = 2*drag/(D + W)
-print(dragAccel)
 t = burnTime(specificImpulse, R, g0, altitudeGoal)
 propMass = t * mdot
 
@@ -79,7 +85,8 @@ for count in range(20):
     loxMass = loxMassCalc(propMass)
     sizing.changeRP1(kgToLb(rp1Mass))
     sizing.changeLOx(kgToLb(loxMass))
-    newD = dryMass(F)
+    newL = tankLength(propMass)
+    newD = dryMass(F, newL)
     newW = wetMass(newD)
     newR = massRatio(newW, newD)
     dragAccel = 2*drag/(newD + newW)
