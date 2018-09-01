@@ -66,20 +66,10 @@ def main():
     x2 = []
     y2 = []
 
-    i = 0
     inches = " inches"
 
     plt.figure(1)
     for pipeSize in pipeSizes:
-        if(i > 0):
-            plt.subplot(2,1,1)
-            plt.plot(x1,y1,label=str(pipeSize)+inches)
-            plt.subplot(2,1,2)
-            plt.plot(x1,y2,label=str(pipeSize)+inches)
-        i+=1
-        del x1[:]
-        del y1[:]
-        del y2[:]
         for value in thrustPossibilities:
             mDot = calculateMassFlowRate(value,Veq)
             pD = pdc.exportfunc(pressure,pipeSize,stress,fos,fluidname,mDot,k_factor,pipe_roughness,pipe_length)
@@ -87,17 +77,24 @@ def main():
             x1.append(value)
             y1.append(chamberPressure)
             y2.append(pD)
+        plt.subplot(2,1,1)
+        plt.plot(x1,y1,label=str(pipeSize)+inches)
+        plt.subplot(2,1,2)
+        plt.plot(x1,y2,label=str(pipeSize)+inches)
+        del x1[:]
+        del y1[:]
+        del y2[:]
 
     plt.subplot(2,1,1)
     plt.plot(x1,y1)
-    plt.axis([2000,5000,0,750])
+    plt.axis([0,5000,0,1000])
     plt.xlabel('Thrust')
     plt.ylabel('Chamber Pressure')
     plt.legend(loc='lower left')
 
     plt.subplot(2,1,2)
     plt.plot(x1,y2)
-    plt.axis([2000,5000,0,750])
+    plt.axis([0,5000,0,1000])
     plt.xlabel('Thrust')
     plt.ylabel('Pressure Drop')
     plt.legend(loc='upper left')
