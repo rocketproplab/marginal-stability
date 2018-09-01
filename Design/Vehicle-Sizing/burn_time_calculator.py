@@ -49,6 +49,11 @@ def rp1MassCalc(propMass):
 def loxMassCalc(propMass):
     return propMass * of_ratio / (of_ratio + 1)
 
+def heightCalc(specificImpulse, massRatio, burnTime, g0):
+    v_e = specificImpulse * g0
+    hMax = ((v_e)**2 * (numpy.log(massRatio))**2 / (2 * g0)) - v_e * burnTime * ((massRatio/(massRatio - 1))*numpy.log(R) - 1)
+    return hMax
+
 sizing.changeDiam(diameter)
 F = fixedMass()
 mdot = thrust / (specificImpulse * g0)
@@ -56,14 +61,15 @@ D = dryMass(F)
 W = wetMass(D)
 R = massRatio(W, D)
 dragAccel = 2*drag/(D + W)
-t = burnTime(specificImpulse, R, g0 + dragAccel, altitudeGoal)
+print(dragAccel)
+t = burnTime(specificImpulse, R, g0, altitudeGoal)
 propMass = t * mdot
 
 print("D1 = " + str(kgToLb(D)))
 print("W1 = " + str(kgToLb(W)))
 print("Old propMass = " + str(sizing.m_lox + sizing.m_rp1))
-print(sizing.m_lox)
 print("t1 = " + str(t))
+print("height = " + str(heightCalc(specificImpulse, R, t, g0)))
 print("mdot = " + str(kgToLb(mdot)))
 print("new propMass = " + str(kgToLb(propMass)))
 
@@ -76,11 +82,11 @@ for count in range(20):
     newW = wetMass(newD)
     newR = massRatio(newW, newD)
     dragAccel = 2*drag/(newD + newW)
-    newT = burnTime(specificImpulse, newR, g0 + dragAccel, altitudeGoal)
+    newT = burnTime(specificImpulse, newR, g0, altitudeGoal)
     propMass = newT * mdot
-    print(sizing.m_lox)
     print("new propMass = " + str(kgToLb(propMass)))
     print("new D = " + str(kgToLb(newD)))
     print("new W = " + str(kgToLb(newW)))
     print("new T = " + str(newT))
+    print("height = " + str(heightCalc(specificImpulse, newR, newT, g0)))
     print("mdot = " + str(kgToLb(mdot)))
