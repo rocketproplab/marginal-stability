@@ -68,8 +68,8 @@ for time in range(initialTime, finalTime):
     M = time * mdot
     rp1Mass = rp1MassCalc(M)
     loxMass = loxMassCalc(M)
-    sizing.changeRP1(kgToLb(M))
-    sizing.changeLOx(kgToLb(M))
+    sizing.changeRP1(kgToLb(rp1Mass))
+    sizing.changeLOx(kgToLb(loxMass))
     F = fixedMass()
     L = tankLength(lbToKg(sizing.m_lox + sizing.m_rp1))
     D = dryMass(F,L)
@@ -78,6 +78,11 @@ for time in range(initialTime, finalTime):
     dragAccel = 2*drag/(D + W)
     height = heightCalc(specificImpulse, R, time, g0 + dragAccel)
     if height >= altitudeGoal:
+        print(sizing.m_lox)
+        print(sizing.m_rp1)
+        print("fixed mass = " + str(kgToLb(F)))
+        print("dry mass = " + str(kgToLb(D)))
+        print("wet mass = " + str(kgToLb(W)))
         print("apogee = " + str(height))
         print("burn time = " + str(time))
         break
