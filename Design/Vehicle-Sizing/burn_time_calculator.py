@@ -8,8 +8,12 @@ initialTime = int(input("Enter initial burn time (must be underestimate): "))
 finalTime = int(input("Enter initial burn time (must be overestimate): "))
 g0 = 9.8 #m/s^2 (acceleration due to gravity)
 specificImpulse = 260 #s
+efficiency = .45
 of_ratio = 2.33
-drag = 300
+if diameter == 8:
+    drag = 275
+else:
+    drag = 300
 #http://web.mit.edu/16.unified/www/SPRING/propulsion/notes/node103.html has rocket equations
 
 def lbToKg(lbMass):
@@ -75,11 +79,12 @@ for time in range(initialTime, finalTime):
     D = dryMass(F,L)
     W = wetMass(D)
     R = massRatio(W, D)
-    dragAccel = 2*drag/(D + W)
+    dragAccel = drag/D
     height = heightCalc(specificImpulse, R, time, g0 + dragAccel)
     if height >= altitudeGoal:
         print(sizing.m_lox)
         print(sizing.m_rp1)
+        print(tankLinDen)
         print("fixed mass = " + str(kgToLb(F)))
         print("dry mass = " + str(kgToLb(D)))
         print("wet mass = " + str(kgToLb(W)))
