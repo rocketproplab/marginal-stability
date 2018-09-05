@@ -102,7 +102,8 @@ class Rocket(object):
         self.heat               = [self.initialConditions['heat']]
         self.lift_coefficient   = [self.initialConditions['lift_coefficient']]
         self.bank_angle         = [self.initialConditions['bank_angle']]
-        self.drag               = [self.calc_Cd(0)]
+        self.cD                 = [self.calc_Cd(0)]
+        self.drag               = [0]
 
         # initialize arrays with values from engines
         self.nengines           = self.engines['nengines']
@@ -128,6 +129,7 @@ class Rocket(object):
             # calculate altitude, velocity, and acceleration
             self.altitude.append(self.altitude[self.runIter] + self.calc_dalt())
             self.velocity.append(self.velocity[self.runIter] + self.calc_deltaV())
+            self.drag.append(self.calc_drag(self.velocity[self.runIter], rho, .05, Cd))
             self.acceleration.append(self.calc_accel())
 
             # Thrust
