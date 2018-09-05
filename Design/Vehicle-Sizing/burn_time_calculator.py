@@ -84,7 +84,6 @@ for time in range(initialTime, finalTime):
     if height >= altitudeGoal:
         print(sizing.m_lox)
         print(sizing.m_rp1)
-        print(tankLinDen)
         print("fixed mass = " + str(kgToLb(F)))
         print("dry mass = " + str(kgToLb(D)))
         print("wet mass = " + str(kgToLb(W)))

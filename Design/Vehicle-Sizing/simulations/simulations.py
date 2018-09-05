@@ -11,14 +11,14 @@ __status__ = "alpha"
 
 class Rocket(object):
     """ Rocket is a simulation class for rocket simulations.
-    
+
     This module performs calculations for the estimation of
-    launch vehicle sizing and trajectory simulation for 
+    launch vehicle sizing and trajectory simulation for
     vertical launch vehicles.
-    
+
     A list of assumptions, capabilities, and limitations
     will be added here as features are solidified. """
-    
+
     def __init__(self, initialConditions, engines, burntime, timestep=1):
         """ Initialization of the Rocket simulation class
 
@@ -39,14 +39,14 @@ class Rocket(object):
                 thrust_angle,       # [rad]
                 lift_coefficient,   # [1]
                 bank_angle          # [rad]
-            
+
             engines:
             -> Required keywords:
                 thrust_sl:          # [N]
                 Isp:                # [s]
                 Ae:                 # [m^2]
                 nengines:           # [1]
-            
+
             burntime: length of burn in seconds
         Keyword Args:
             timestep: (optional), timestep in seconds. Default
@@ -54,7 +54,7 @@ class Rocket(object):
         Returns:
             0: Completed with no errors
         """
-        
+
         requiredArgs = [
             'time',
             'velocity',
@@ -85,7 +85,7 @@ class Rocket(object):
 
     def run(self, stopTime=None, stopApogee=None):
         """ runs simulation
-        
+
         Automatically ends simulation when the vehicle impacts
         the ground, or reaches a stable orbit.
         """
@@ -103,7 +103,7 @@ class Rocket(object):
         self.lift_coefficient   = [self.initialConditions['lift_coefficient']]
         self.bank_angle         = [self.initialConditions['bank_angle']]
         self.drag               = [self.calc_Cd(0)]
-        
+
         # initialize arrays with values from engines
         self.nengines           = self.engines['nengines']
         self.thrust             = [self.engines['thrust_sl']*self.nengines]
@@ -119,7 +119,7 @@ class Rocket(object):
         self.runIter = 0  # iterator
         while True:
             self.time.append(self.time[self.runIter] + self.timestep)
-            self.R.append(self.Rearth + self.altitude[self.runIter]) 
+            self.R.append(self.Rearth + self.altitude[self.runIter])
             T, rho, sos = self.STDATM(self.altitude[self.runIter])  # Thermoproperties
 
             M = self.velocity[self.runIter]/sos
@@ -185,7 +185,7 @@ class Rocket(object):
         Returns:
             accel: acceleration value of the rocket
         """
-        
+
         i = self.runIter
         if not thrust:
             thrust = self.thrust[i]
@@ -302,12 +302,12 @@ class Rocket(object):
         altitude_base = 0.0
         temperature_base = 288.16
         density_base = 1.2250
-        
+
         if altitude > 11000.0:
             layer = 1.0       # isothermal layer
             altitude_base = 11000.0
             temperature_base = 216.66
-            density_base = 0.3648 
+            density_base = 0.3648
         elif altitude > 25000.0:
             layer = -1.0      # gradient layer
             gradient = 0.003
@@ -329,7 +329,7 @@ class Rocket(object):
             layer = 1.0       # isothermal layer
             altitude_base = 79000.0
             temperature_base = 165.66
-            density_base = 0.0000224    
+            density_base = 0.0000224
         elif altitude > 90000.0:
             layer = -1.0      # gradient layer
             gradient = 0.004
@@ -345,7 +345,7 @@ class Rocket(object):
             power = -1.0*self.g0*(altitude - altitude_base)/self.R_air/temperature
             density = density_base*np.exp(power)
         sos = np.sqrt(self.gamma_air*self.R_air*temperature)
-        
+
         return (temperature, density, sos)
 
 
