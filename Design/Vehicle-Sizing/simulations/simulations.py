@@ -102,7 +102,7 @@ class Rocket(object):
         self.heat               = [self.initialConditions['heat']]
         self.lift_coefficient   = [self.initialConditions['lift_coefficient']]
         self.bank_angle         = [self.initialConditions['bank_angle']]
-        self.cD                 = [self.calc_Cd(0)]
+        self.Cd                 = [self.calc_Cd(0)]
         self.drag               = [0]
 
         # initialize arrays with values from engines
@@ -142,14 +142,14 @@ class Rocket(object):
             self.flight_heading.append(self.flight_heading[0])  # initial values until calcs added
             self.flight_angle.append(self.flight_angle[0])      # initial values until calcs added
             self.thrust_angle.append(self.thrust_angle[0])
-            self.drag.append(self.drag[0])
+            self.Cd.append(self.Cd[0])
 
             # END CONDITIONS
             if (self.altitude[self.runIter] < 1000 and self.time[self.runIter] > self.burntime) or self.time[self.runIter] > 10000:
                 break
 
             self.runIter += 1
-        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust)
+        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag)
 
     def calc_Cd(self, M):
         return 0.15 + 0.6*M**2*np.exp(-M**2)
