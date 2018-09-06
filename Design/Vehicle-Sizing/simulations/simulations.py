@@ -39,6 +39,7 @@ class Rocket(object):
                 thrust_angle,       # [rad]
                 lift_coefficient,   # [1]
                 bank_angle          # [rad]
+                reference_area      # [m^2]
 
             engines:
             -> Required keywords:
@@ -71,6 +72,7 @@ class Rocket(object):
             'thrust_angle',
             'Ae',
             'Isp',
+            'reference_area',
         ]
 
         for arg in requiredArgs:
@@ -116,6 +118,7 @@ class Rocket(object):
         # initialize additional values
         self.acceleration    = [0]
         self.R               = [self.Rearth]  # [m] initial distance to the center of the earth
+        self.reference_area  = self.initialConditions['reference_area']
 
         self.runIter = 0  # iterator
         while True:
@@ -129,7 +132,7 @@ class Rocket(object):
             # calculate altitude, velocity, and acceleration
             self.altitude.append(self.altitude[self.runIter] + self.calc_dalt())
             self.velocity.append(self.velocity[self.runIter] + self.calc_deltaV())
-            self.drag.append(self.calc_drag(self.velocity[self.runIter], rho, .05, Cd))
+            self.drag.append(self.calc_drag(self.velocity[self.runIter], rho, self.reference_area, Cd))
             self.acceleration.append(self.calc_accel())
 
             # Thrust
@@ -152,7 +155,7 @@ class Rocket(object):
         return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag)
 
     def calc_Cd(self, M):
-        return 0.15 + 0.6*M**2*np.exp(-M**2)
+        return .75
 
     def calc_drag(self, vel, rho, S, Cd):
         return 1/2*rho*vel**2*S*Cd
@@ -310,29 +313,29 @@ class Rocket(object):
             altitude_base = 11000.0
             temperature_base = 216.66
             density_base = 0.3648
-        elif altitude > 25000.0:
+        if altitude > 25000.0:
             layer = -1.0      # gradient layer
             gradient = 0.003
             altitude_base = 25000.0
             temperature_base = 216.66
             density_base = 0.04064
-        elif altitude > 47000.0:
+        if altitude > 47000.0:
             layer = 1.0       # isothermal layer
             altitude_base = 47000.0
             temperature_base = 282.66
             density_base = 0.001476
-        elif altitude > 53000.0:
+        if altitude > 53000.0:
             layer = -1.0      # gradient layer
             gradient = -0.0045
             altitude_base = 53000.0
             temperature_base = 282.66
             density_base = 0.0007579
-        elif altitude > 79000.0:
+        if altitude > 79000.0:
             layer = 1.0       # isothermal layer
             altitude_base = 79000.0
             temperature_base = 165.66
             density_base = 0.0000224
-        elif altitude > 90000.0:
+        if altitude > 90000.0:
             layer = -1.0      # gradient layer
             gradient = 0.004
             altitude_base = 90000.0
