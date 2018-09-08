@@ -89,22 +89,50 @@ vh_lox = (diam - (2 * th_lox))**3 * 0.5 * (pi / 24) * 2
 
 vh_rp1 = (diam - (2 * th_rp1))**3 * 0.5 * (pi / 24) * 2
 
+# Added 9/8/18 for more accurate modifications
+if diam == 8:
+    vol_mounting_lox = 2.35
+    vol_mounting_rp1 = 1.64
+elif diam == 10:
+    vol_mounting_lox = 2.35
+    vol_mounting_rp1 = 1.64
+
+# Sorry about the fudge factors, but I had to use SolidWorks to figure out
+# the volume of the mounting surfaces due to their complex shapes
+# The code will just take in the sizes of the changes for now, until
+# I can figure out something more permanent and trustworthy
+# It is still more accurate, and maybe even more so than calculations could be
+
+
+vh_com_lox = (((diam / 2) - 0.5)**3 * 0.5 * (pi/24) * 2) - vol_mounting_lox
+vh_com_rp1 = (((diam / 2) - 0.5)**3 * 0.5 * (pi/24) * 2) - vol_mounting_rp1
+# Based on design changes to eliminate impossible manufacturing geometries
+
+
+
+'''
 # Added 9/7/18--To accomodate for change in the bulkhead design
 # Removes the volume of the six mounting rectangles from the tank head
-vol_rectangle_lox = 0.5**2 * (1.855)
+vol_rectangle_lox = 0.5**2 * (1.322)
 vol_rectangle_lox = 6 * vol_rectangle_lox # can add more later if more are needed
-vol_rectangle_rp1 = 0.5**2 * (1.05) #still very iffy, need to make it more accurate
+vol_rectangle_rp1 = 0.5**2 * (1.048) 
 vol_rectangle_rp1 = 6 * vol_rectangle_rp1
+# Accounts for the LOx bulkhead's rectangular part of the mounts
+# Still needs the rounded ends
+
 
 vh_lox = vh_lox - vol_rectangle_lox
 vh_rp1 = vh_rp1 - vol_rectangle_rp1
+'''
+
+
 
 # Tank straight-wall height requirements
-sh_lox = (vol_lox - (2 * vh_lox)) / (pi * ((diam - 2 * t_lox)/2)**2)
+sh_lox = (vol_lox - (vh_com_lox + vh_lox)) / (pi * ((diam - 2 * t_lox)/2)**2)
 sh_rp1 = vol_rp1 / (pi * (((diam - (2 * t_rp1))/2)**2 - (tubediam / 2)**2)) # factors out internal plumbing
 
 # Volume of LOx tank
-vol_loxtank = (2 * vh_lox) + (pi * ((diam - (2 * t_lox))/2)**2 * sh_lox)
+vol_loxtank = (vh_com_lox + vh_lox) + (pi * ((diam - (2 * t_lox))/2)**2 * sh_lox)
 vol_rp1tank = (pi * ((diam - (2 * t_rp1))/2)**2 * sh_rp1)
 
 # Tank head heights (for CAD purposes, mostly)
@@ -144,14 +172,14 @@ CRo_rp1 = 0.9 * diam
 # Tank metal volume and mass estimates
 loxheadmetal = ((diam**3) * 0.5 * (pi / 24) * 2) - vh_lox
 rp1headmetal = ((diam**3) * 0.5 * (pi/24) * 2) - vh_rp1
+combulkheadmetal = ((((diam / 2) - 0.5)**3 * 0.5 * (pi / 24) * 2) * 2) + vol_mounting_rp1 + vol_mounting_lox
 metalwalllox = (pi * (diam / 2)**2 * sh_lox) - (pi * (((diam - 2 * t_lox)/2)**2) * sh_lox)
 metalwallrp1 = (pi * (diam / 2)**2 * sh_rp1) - (pi * (((diam - 2 * t_rp1)/2)**2) * sh_rp1)
-metalvolume = 2*loxheadmetal + metalwalllox + metalwallrp1 + 2 * rp1headmetal
+metalvolume = loxheadmetal + metalwalllox + metalwallrp1 + rp1headmetal + combulkheadmetal
 
-#add rough mass of rectangular mounts to the overall tank mass
-lox_rect_vol = 0.5**2 * 1.855
-rp1_rect_vol = 0.5**2 * 1.05
-metalvolume = metalvolume + lox_rect_vol + rp1_rect_vol
+#add rough mass of rectangular mounts to the overall tank mass--no longer needed for now
+
+#metalvolume = metalvolume + lox_rect_vol + rp1_rect_vol
 
 tank_mass = rho_alum * metalvolume
 
