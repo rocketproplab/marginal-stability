@@ -209,4 +209,4 @@ class tankSize:
 
         file2.close()
 
-example = tankSize(500,250,8,750,4,6,4500,50)
+example = tankSize(115.5001155,269.1152691,10,750,4,8,4500,50)
