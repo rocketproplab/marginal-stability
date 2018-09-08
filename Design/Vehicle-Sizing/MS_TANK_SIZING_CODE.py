@@ -94,8 +94,8 @@ if diam == 8:
     vol_mounting_lox = 2.35
     vol_mounting_rp1 = 1.64
 elif diam == 10:
-    vol_mounting_lox = 2.35
-    vol_mounting_rp1 = 1.64
+    vol_mounting_lox = 2.29
+    vol_mounting_rp1 = 1.29
 
 # Sorry about the fudge factors, but I had to use SolidWorks to figure out
 # the volume of the mounting surfaces due to their complex shapes
