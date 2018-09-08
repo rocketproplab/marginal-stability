@@ -89,6 +89,16 @@ vh_lox = (diam - (2 * th_lox))**3 * 0.5 * (pi / 24) * 2
 
 vh_rp1 = (diam - (2 * th_rp1))**3 * 0.5 * (pi / 24) * 2
 
+# Added 9/7/18--To accomodate for change in the bulkhead design
+# Removes the volume of the six mounting rectangles from the tank head
+vol_rectangle_lox = 0.5**2 * (1.855)
+vol_rectangle_lox = 6 * vol_rectangle_lox # can add more later if more are needed
+vol_rectangle_rp1 = 0.5**2 * (1.05) #still very iffy, need to make it more accurate
+vol_rectangle_rp1 = 6 * vol_rectangle_rp1
+
+vh_lox = vh_lox - vol_rectangle_lox
+vh_rp1 = vh_rp1 - vol_rectangle_rp1
+
 # Tank straight-wall height requirements
 sh_lox = (vol_lox - (2 * vh_lox)) / (pi * ((diam - 2 * t_lox)/2)**2)
 sh_rp1 = vol_rp1 / (pi * (((diam - (2 * t_rp1))/2)**2 - (tubediam / 2)**2)) # factors out internal plumbing
@@ -138,18 +148,20 @@ metalwalllox = (pi * (diam / 2)**2 * sh_lox) - (pi * (((diam - 2 * t_lox)/2)**2)
 metalwallrp1 = (pi * (diam / 2)**2 * sh_rp1) - (pi * (((diam - 2 * t_rp1)/2)**2) * sh_rp1)
 metalvolume = 2*loxheadmetal + metalwalllox + metalwallrp1 + 2 * rp1headmetal
 
+#add rough mass of rectangular mounts to the overall tank mass
+lox_rect_vol = 0.5**2 * 1.855
+rp1_rect_vol = 0.5**2 * 1.05
+metalvolume = metalvolume + lox_rect_vol + rp1_rect_vol
+
 tank_mass = rho_alum * metalvolume
 
-
-file2 = open('output.txt', 'w') # creates generic output file, can be renamed later
-# Print results to output file rather than command line
-file2.write('The propellant tank diameter is ' + str(diam) + ' in\n')
-file2.write('The LOx tank pressure is ' + str(lox_press) + ' psi\n')
-file2.write('The RP-1 tank pressure is ' + str(rp1_press) + ' psi\n')
-file2.write('The total mass is ' + str(round(tank_mass, 3)) + ' lbs\n')
-file2.write('The total tank height is ' + str(round(total_height, 3)) + ' in\n')
-file2.write('The LOx tank is ' + str(round(lox_height, 3)) + ' in high\n')
-file2.write('The RP-1 tank is ' + str(round(rp1_height, 3)) + ' in high\n')
+print('The propellant tank diameter is ' + str(diam) + ' in')
+print('The LOx tank pressure is ' + str(lox_press) + ' psi')
+print('The RP-1 tank pressure is ' + str(rp1_press) + ' psi')
+print('The total mass is ' + str(round(tank_mass, 3)) + ' lbs')
+print('The total tank height is ' + str(round(total_height, 3)) + ' in')
+print('The LOx tank is ' + str(round(lox_height, 3)) + ' in high')
+print('The RP-1 tank is ' + str(round(rp1_height, 3)) + ' in high')
 '''Another quick note: I floated everything to 3 digits here just for simplicity's sake.
 It won't hurt my feelings if you need to float the decimals further or just take
 rounding off altogether, if precision becomes more important than 3 decimals down
@@ -183,10 +195,10 @@ press_vol = (press_mass * (1/molar_mass) * R * press_temp) / initial_press
 tank_height = ((press_vol - (4/3) * pi * (press_tank_diam / 2)**3) / (pi * (press_tank_diam / 2)**2)) + press_tank_diam
 
 # ...and print the results!
-file2.write('The helium tank diameter is ' + str(press_tank_diam) + ' in\n')
-file2.write('The volume of helium needed is ' + str(round(press_vol, 3)) + ' in^3\n')
-file2.write('The mass of helium needed is ' + str(round(press_mass, 3)) + ' lbm\n')
-file2.write('The pressurant tank is ' + str(round(tank_height, 3)) + ' in high\n')
+print('The helium tank diameter is ' + str(press_tank_diam) + ' in')
+print('The volume of helium needed is ' + str(round(press_vol, 3)) + ' in^3')
+print('The mass of helium needed is ' + str(round(press_mass, 3)) + ' lbm')
+print('The pressurant tank is ' + str(round(tank_height, 3)) + ' in high')
 
-file2.close()
+
 
