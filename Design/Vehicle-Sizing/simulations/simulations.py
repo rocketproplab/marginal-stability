@@ -107,6 +107,7 @@ class Rocket(object):
         self.Cd                 = [self.calc_Cd(0)]
         self.drag               = [0]
         self.dynamic_pressure   = [0]
+        self.rho                = [self.STDATM(self.initialConditions['altitude'])[1]]
 
         # initialize arrays with values from engines
         self.nengines           = self.engines['nengines']
@@ -126,6 +127,7 @@ class Rocket(object):
             self.time.append(self.time[self.runIter] + self.timestep)
             self.R.append(self.Rearth + self.altitude[self.runIter])
             T, rho, sos = self.STDATM(self.altitude[self.runIter])  # Thermoproperties
+            self.rho.append(rho)
 
             M = self.velocity[self.runIter]/sos
             Cd = self.calc_Cd(M)
@@ -147,14 +149,15 @@ class Rocket(object):
             self.flight_angle.append(self.flight_angle[0])      # initial values until calcs added
             self.thrust_angle.append(self.thrust_angle[0])
             self.Cd.append(self.Cd[0])
-            self.dynamic_pressure.append(self.calc_Q(rho,self.velocity[self.runIter]))
+            if self.altitude[self.runIter] >= self.altitude[self.runIter - 1]:
+                self.dynamic_pressure.append(self.calc_Q(rho))
 
             # END CONDITIONS
             if (self.altitude[self.runIter] < 1000 and self.time[self.runIter] > self.burntime) or self.time[self.runIter] > 10000:
                 break
 
             self.runIter += 1
-        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure)
+        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho)
 
     def calc_Cd(self, M):
         return .75
@@ -295,8 +298,9 @@ class Rocket(object):
         dVdt = (thrust*np.cos(thrust_angle)-drag)/mass - self.g0*(self.Rearth/R)**2*np.sin(flight_heading)
         return dVdt
 
-    def calc_Q(self,rho,vel):
-        return .5 * rho * (vel**2)
+    def calc_Q(self,rho):
+        vel = self.velocity[self.runIter]
+        return (1/2) * rho * (vel**2)
 
     def CONST(self):
         """ Define useful constants as instance variables """
