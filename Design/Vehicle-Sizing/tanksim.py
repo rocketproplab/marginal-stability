@@ -19,12 +19,16 @@ class tank:
         self.m_lox = m_lox
         self.m_rp1 = m_rp1
         self.tubediam = 0.83 # OD for transfer tube, in (for subtracting volume)
-        self.lox_rectangle_len = 1.855
-        self.rp1_rectangle_len = 1.05
+        self.lox_rectangle_len = 1.322
+        self.rp1_rectangle_len = 1.048
         self.gamma = 5 / 3; # the ratio of specific heats for the gas equations
         self.press_temp = 536.67 # gives temperature of pressurant in *R
         self.gasConst = 10.73159*12**3 # gas constant in imperial, in^3-psi / *R-lbmol
         self.molar_mass = 4.003 # also for gas equations, lbm/lbmol
+        self.vol_mounting_lox = 2.35
+        self.vol_mounting_rp1 = 1.64
+        self.vh_com_lox = (((self.diam / 2) - 0.5)**3 * 0.5 * (self.pi/24) * 2) - self.vol_mounting_lox
+        self.vh_com_rp1 = (((self.diam / 2) - 0.5)**3 * 0.5 * (self.pi/24) * 2) - self.vol_mounting_rp1
 
     def volume(self,mass,density):
         return mass/density
@@ -45,13 +49,13 @@ class tank:
         return totalVolume - self.mountRectangleVolume(rectangleLen)
 
     def LOxTankWallHeight(self,loxVolume,diameter,headVolume,tankThickness):
-        return (loxVolume - (2 * headVolume)) / (self.pi * ((diameter - 2 * tankThickness)/2)**2)
+        return (loxVolume - (headVolume + self.vh_com_lox)) / (self.pi * ((diameter - 2 * tankThickness)/2)**2)
 
     def RP1TankWallHeight(self,rp1Volume,diameter,tankThickness):
         return (rp1Volume) / (self.pi * (((diameter - (2 * tankThickness))/2)**2 - (self.tubediam / 2)**2))
 
     def LOxTankVolume(self,headVolume,diameter,tankThickness,wallHeight):
-        return (2 * headVolume) + (self.pi * ((diameter - (2 * tankThickness))/2)**2 * wallHeight)
+        return (self.vh_com_lox + headVolume) + (self.pi * ((diameter - (2 * tankThickness))/2)**2 * wallHeight)
 
     def RP1TankVolume(self,diameter,tankThickness,wallHeight):
         return (self.pi * ((diameter - (2 * tankThickness))/2)**2 * wallHeight)
@@ -99,8 +103,11 @@ class tank:
     def wallMetalVolume(self,diameter,wallHeight,wallThickness):
         return (self.pi * (diameter / 2)**2 * wallHeight) - (self.pi * (((diameter - 2 * wallThickness)/2)**2) * wallHeight)
 
-    def totalMetalVolume(self,loxHeadMetalVolume,rp1HeadMetalVolume,loxWallMetalVolume,rp1WallMetalVolume,loxMountRectangleVolume,rp1MountRectangleVolume):
-        return 2*(loxHeadMetalVolume + rp1HeadMetalVolume) + loxWallMetalVolume + rp1WallMetalVolume + loxMountRectangleVolume + rp1MountRectangleVolume
+    def commonBulkheadVolume(self,diameter):
+         return ((((diameter / 2) - 0.5)**3 * 0.5 * (self.pi / 24) * 2) * 2) + self.vol_mounting_rp1 + self.vol_mounting_lox
+
+    def totalMetalVolume(self,loxHeadMetalVolume,rp1HeadMetalVolume,loxWallMetalVolume,rp1WallMetalVolume,commonBulkheadMetal):
+        return loxHeadMetalVolume + rp1HeadMetalVolume + loxWallMetalVolume + rp1WallMetalVolume + commonBulkheadMetal
 
     def totalPropVol(self, loxMass, rp1Mass, loxDen, rp1Den):
         return self.volume(loxMass,loxDen) + self.volume(rp1Mass,rp1Den)
@@ -150,7 +157,8 @@ class tank:
         metalwallrp1 = self.wallMetalVolume(self.diam,sh_rp1,t_rp1)
         lox_total_rect_volume = self.mountRectangleVolume(self.lox_rectangle_len)
         rp1_total_rect_volume = self.mountRectangleVolume(self.rp1_rectangle_len)
-        metalvolume = self.totalMetalVolume(loxheadmetal,rp1headmetal,metalwalllox,metalwallrp1,lox_total_rect_volume,rp1_total_rect_volume)
+        commonBulkheadMetal = self.commonBulkheadVolume(self.diam)
+        metalvolume = self.totalMetalVolume(loxheadmetal,rp1headmetal,metalwalllox,metalwallrp1,commonBulkheadMetal)
         tank_mass = metalvolume * self.rho_alum
         return {'vol_lox': vol_lox,
                 'vol_rp1': vol_rp1,
@@ -178,5 +186,6 @@ class tank:
                 'metalwallrp1': metalwallrp1,
                 'lox_total_rect_volume': lox_total_rect_volume,
                 'rp1_total_rect_volume': rp1_total_rect_volume,
+                'commonBulkheadMetal': commonBulkheadMetal,
                 'metalvolume': metalvolume,
                 'tank_mass': tank_mass}

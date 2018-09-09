@@ -1,11 +1,11 @@
 The propellant tank diameter is 10 in
 The LOx tank pressure is 750 psi
 The RP-1 tank pressure is 750 psi
-The total mass is 599.086 lbs
-The total tank height is 539.222 in
-The LOx tank is 131.031 in high
-The RP-1 tank is 410.851 in high
+The total mass is 178.991 lbs
+The total tank height is 158.963 in
+The LOx tank is 97.948 in high
+The RP-1 tank is 63.676 in high
 The helium tank diameter is 8 in
-The volume of helium needed is 10077.601 in^3
-The mass of helium needed is 18.241 lbm
-The pressurant tank is 203.154 in high
+The volume of helium needed is 2951.491 in^3
+The mass of helium needed is 5.342 lbm
+The pressurant tank is 61.385 in high
