@@ -103,6 +103,7 @@ class Rocket(object):
         self.lift_coefficient   = [self.initialConditions['lift_coefficient']]
         self.bank_angle         = [self.initialConditions['bank_angle']]
         self.drag               = [self.calc_Cd(0)]
+        self.dynamic_pressure   = [0]
         
         # initialize arrays with values from engines
         self.nengines           = self.engines['nengines']
@@ -125,10 +126,11 @@ class Rocket(object):
             M = self.velocity[self.runIter]/sos
             Cd = self.calc_Cd(M)
 
-            # calculate altitude, velocity, and acceleration
+            # calculate altitude, drag, velocity, and acceleration
             self.altitude.append(self.altitude[self.runIter] + self.calc_dalt())
             self.velocity.append(self.velocity[self.runIter] + self.calc_deltaV())
             self.acceleration.append(self.calc_accel())
+            self.dynamic_pressure.append(self.maxQ(rho))
 
             # Thrust
             if self.time[self.runIter] <= self.burntime:
@@ -147,7 +149,7 @@ class Rocket(object):
                 break
 
             self.runIter += 1
-        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust)
+        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.dynamic_pressure)
 
     def calc_Cd(self, M):
         return 0.15 + 0.6*M**2*np.exp(-M**2)
@@ -297,7 +299,7 @@ class Rocket(object):
 
     # standard atmosphere model (SI units)
     def STDATM(self, altitude):
-        layer = -1.0            # gradient layer
+        layer = -1.0# gradient layer
         gradient = -0.0065
         altitude_base = 0.0
         temperature_base = 288.16
@@ -313,7 +315,7 @@ class Rocket(object):
             gradient = 0.003
             altitude_base = 25000.0
             temperature_base = 216.66
-            density_base = 0.04064
+            density_base = 0.04064s
         elif altitude > 47000.0:
             layer = 1.0       # isothermal layer
             altitude_base = 47000.0
@@ -348,6 +350,10 @@ class Rocket(object):
         
         return (temperature, density, sos)
 
+    def maxQ (self,density):
+        i = self.runIter
+        currentVelocity = self.velocity[i]
+        return (1/2) * density * (currentVelocity ** 2)
 
 def test_Rocket():
     burntime = 50  # s
