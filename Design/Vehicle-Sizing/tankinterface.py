@@ -46,7 +46,7 @@ final_press = float(press_fpress_stuff[1])
 
 file.close() # closes the input file once everything's read in
 
-testtank = tanksim.tank(diam,lox_press,fos,press_tank_diam,initial_press,final_press,796.34,357.10)
+testtank = tanksim.tank(diam,lox_press,fos,press_tank_diam,initial_press,final_press,438,196)
 tankSpecs = testtank.tankCalc()
 pressSpecs = testtank.pressTankCalc()
 
