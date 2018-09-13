@@ -150,7 +150,7 @@ class Rocket(object):
             self.thrust_angle.append(self.thrust_angle[0])
             self.Cd.append(self.Cd[0])
             if self.altitude[self.runIter] >= self.altitude[self.runIter - 1]:
-                self.dynamic_pressure.append(self.calc_Q(rho))
+                self.dynamic_pressure.append(self.maxQ(rho))
 
             # END CONDITIONS
             if (self.altitude[self.runIter] < 1000 and self.time[self.runIter] > self.burntime) or self.time[self.runIter] > 10000:
@@ -298,9 +298,10 @@ class Rocket(object):
         dVdt = (thrust*np.cos(thrust_angle)-drag)/mass - self.g0*(self.Rearth/R)**2*np.sin(flight_heading)
         return dVdt
 
-    def calc_Q(self,rho):
-        vel = self.velocity[self.runIter]
-        return (1/2) * rho * (vel**2)
+    def maxQ (self,density):
+        i = self.runIter
+        currentVelocity = self.velocity[i]
+        return (1/2) * density * (currentVelocity ** 2)
 
     def CONST(self):
         """ Define useful constants as instance variables """
