@@ -27,3 +27,6 @@ def nToLbf(n):
 
 def lbmToSlug(lbm):
     return lbm / 32.174049
+
+def psfToPsi(psf):
+    return psf / 144

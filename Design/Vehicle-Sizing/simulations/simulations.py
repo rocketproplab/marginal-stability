@@ -2,7 +2,6 @@
 Simulations is a python based flight simulation package
 for rocket and missle trajectory analysis. """
 import numpy as np
-import unit_conversions as unit
 
 __author__ = "Cameron Flannery"
 __copyright__ = "Copyright 2018"
@@ -28,25 +27,24 @@ class Rocket(object):
             initial conditions for launch vehicle.
              -> Required keywords:
                 time,               # [s]
-                velocity,           # [m/s]
+                velocity,           # [ft/s]
                 flight_angle,       # [rad] vertical flight path angle
                 flight_heading,     # [rad] flight path heading
                 latitude,           # [rad]
                 longitude,          # [rad]
-                altitude,           # [m]
-                mass,               # [kg]
-                heat,               # [J]
-                thrust_sl,          # [N] sea-level thrust
+                altitude,           # [ft]
+                mass,               # [slug]
+                thrust_sl,          # [lbf] sea-level thrust
                 thrust_angle,       # [rad]
                 lift_coefficient,   # [1]
                 bank_angle          # [rad]
-                reference_area      # [m^2]
+                reference_area      # [ft^2]
 
             engines:
             -> Required keywords:
-                thrust_sl:          # [N]
+                thrust_sl:          # [lbf]
                 Isp:                # [s]
-                Ae:                 # [m^2]
+                Ae:                 # [ft^2]
                 nengines:           # [1]
 
             burntime: length of burn in seconds
@@ -66,7 +64,6 @@ class Rocket(object):
             'longitude',
             'altitude',
             'mass',
-            'heat',
             'lift_coefficient',
             'bank_angle'
             'thrust_sl',
@@ -102,13 +99,13 @@ class Rocket(object):
         self.longitude          = [self.initialConditions['longitude']]
         self.altitude           = [self.initialConditions['altitude']]
         self.mass               = [self.initialConditions['mass']]
-        self.heat               = [self.initialConditions['heat']]
         self.lift_coefficient   = [self.initialConditions['lift_coefficient']]
         self.bank_angle         = [self.initialConditions['bank_angle']]
         self.Cd                 = [self.calc_Cd(0)]
         self.drag               = [0]
         self.dynamic_pressure   = [0]
         self.rho                = [self.STDATM(self.initialConditions['altitude'])[1]]
+        self.temp               = [self.STDATM(self.initialConditions['altitude'])[0]]
 
         # initialize arrays with values from engines
         self.nengines           = self.engines['nengines']
@@ -129,6 +126,7 @@ class Rocket(object):
             self.R.append(self.Rearth + self.altitude[self.runIter])
             T, rho, sos = self.STDATM(self.altitude[self.runIter])  # Thermoproperties
             self.rho.append(rho)
+            self.temp.append(T)
 
             M = self.velocity[self.runIter]/sos
             Cd = self.calc_Cd(M)
@@ -150,7 +148,7 @@ class Rocket(object):
             self.flight_angle.append(self.flight_angle[0])      # initial values until calcs added
             self.thrust_angle.append(self.thrust_angle[0])
             self.Cd.append(self.Cd[0])
-            if self.altitude[self.runIter] >= self.altitude[self.runIter - 1]:
+            if self.runIter <= self.burntime * 2:
                 self.dynamic_pressure.append(self.maxQ(rho))
 
             # END CONDITIONS
@@ -158,7 +156,7 @@ class Rocket(object):
                 break
 
             self.runIter += 1
-        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho)
+        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho, self.temp)
 
     def calc_Cd(self, M):
         return .75
@@ -306,52 +304,52 @@ class Rocket(object):
 
     def CONST(self):
         """ Define useful constants as instance variables """
-        self.g0 = 9.81          # gravity constant [m/s]
-        self.R_air = 287        # gas constant [J/kg/K]
+        self.g0 = 32.17          # gravity constant [ft/s^2]
+        self.R_air = 1716.49        # gas constant [ft*lbf/(slug*R)]
         self.gamma_air = 1.4    # ratio of specific heats
-        self.Rearth = 6378000   # [m]
+        self.Rearth = 2.0902 * 10**7   # [ft]
 
     # standard atmosphere model (SI units)
     def STDATM(self, altitude):
         layer = -1.0            # gradient layer
-        gradient = -0.0065
+        gradient = -0.00357
         altitude_base = 0.0
-        temperature_base = 288.16
-        density_base = 1.2250
+        temperature_base = 518.688
+        density_base = 0.00237689241
 
-        if altitude > 11000.0:
+        if altitude > 36089.239:
             layer = 1.0       # isothermal layer
-            altitude_base = 11000.0
-            temperature_base = 216.66
-            density_base = 0.3648
-        if altitude > 25000.0:
+            altitude_base = 36089.239
+            temperature_base = 389.988
+            density_base = 0.000707828857
+        if altitude > 82020.997:
             layer = -1.0      # gradient layer
-            gradient = 0.003
-            altitude_base = 25000.0
-            temperature_base = 216.66
-            density_base = 0.04064
-        if altitude > 47000.0:
+            gradient = 0.00165
+            altitude_base = 82020.997
+            temperature_base = 389.988
+            density_base = 7.88546183 * (10**(-5))
+        if altitude > 154199.48:
             layer = 1.0       # isothermal layer
-            altitude_base = 47000.0
-            temperature_base = 282.66
-            density_base = 0.001476
-        if altitude > 53000.0:
+            altitude_base = 154199.48
+            temperature_base = 508.788
+            density_base = 2.86391281 * (10**(-6))
+        if altitude > 173884.51:
             layer = -1.0      # gradient layer
-            gradient = -0.0045
-            altitude_base = 53000.0
-            temperature_base = 282.66
-            density_base = 0.0007579
-        if altitude > 79000.0:
+            gradient = -0.00246
+            altitude_base = 173884.51
+            temperature_base = 508.788
+            density_base = 1.47056878 * (10**(-6))
+        if altitude > 259186.35:
             layer = 1.0       # isothermal layer
-            altitude_base = 79000.0
-            temperature_base = 165.66
-            density_base = 0.0000224
-        if altitude > 90000.0:
+            altitude_base = 259186.35
+            temperature_base = 298.188
+            density_base = 4.34631754 * (10**(-8))
+        if altitude > 295275.59:
             layer = -1.0      # gradient layer
-            gradient = 0.004
-            altitude_base = 90000.0
-            temperature_base = 165.66
-            density_base = 0.00000232
+            gradient = 0.00219
+            altitude_base = 295275.59
+            temperature_base = 298.188
+            density_base = 4.50154317 * (10**(-9))
         if layer < 0.0:
             temperature = temperature_base + gradient*(altitude - altitude_base)
             power = -1.0*(self.g0/gradient/self.R_air + 1.0)
@@ -386,7 +384,6 @@ def test_Rocket():
         'longitude': 0,
         'altitude': 0,
         'mass': mass,
-        'heat': 0,
         'lift_coefficient': 0,
         'bank_angle': 0
     }
