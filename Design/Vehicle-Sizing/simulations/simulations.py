@@ -2,6 +2,7 @@
 Simulations is a python based flight simulation package
 for rocket and missle trajectory analysis. """
 import numpy as np
+import unit_conversions as unit
 
 __author__ = "Cameron Flannery"
 __copyright__ = "Copyright 2018"

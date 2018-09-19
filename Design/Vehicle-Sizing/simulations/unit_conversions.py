@@ -24,3 +24,6 @@ def kgm3ToLbft3(kgm3):
 
 def nToLbf(n):
     return n / 4.44822
+
+def lbmToSlug(lbm):
+    return lbm / 32.174049
