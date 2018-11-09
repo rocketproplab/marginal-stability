@@ -14,19 +14,20 @@ g = 9.81 #gravity - meters/seconds^2
 
 ###############################################################################
 
-def imp2metric(thrust,Tc,pc,pa,pe):
+def imp2metric(thrust,Tc,pc,pa,pe,Lstar):
     
     met_thrust = ucm('force',thrust)
     met_Tc = ucm('temperature',Tc)
     met_pc = ucm('pressure',pc)
     met_pa = ucm('pressure',pa)
     met_pe = ucm('pressure',pe)
-
-    return met_thrust, met_Tc, met_pc, met_pa, met_pe
+    met_Lstar = ucm('length',Lstar)
+    
+    return met_thrust, met_Tc, met_pc, met_pa, met_pe, met_Lstar
 
 ###############################################################################
     
-def metric2imp(cstar,mdot,mdot_lox,mdot_fuel,Tthroat,pthroat,uexhaust, \
+def metric2imp(cstar,mdot,mdot_lox,mdot_fuel,Tthroat,pthroat, \
                 Athroat, rthroat, Achamber, rchamber, Aexit, rexit, rn, rb,
                 Vol_chamber, l_nozzle, l_cyl):  
 
@@ -36,7 +37,6 @@ def metric2imp(cstar,mdot,mdot_lox,mdot_fuel,Tthroat,pthroat,uexhaust, \
     imp_mdot_fuel = uci('massflow',mdot_fuel)
     imp_Tthroat = uci('temperature',Tthroat)
     imp_pthroat = uci('pressure',pthroat)
-    imp_uexhaust = uci('velocity',uexhaust)
     imp_athroat = uci('area',Athroat)
     imp_rthroat = uci('length',rthroat)
     imp_achamber = uci('area',Achamber)
@@ -50,24 +50,29 @@ def metric2imp(cstar,mdot,mdot_lox,mdot_fuel,Tthroat,pthroat,uexhaust, \
     imp_lcyl = uci('length',l_cyl)
 
     return imp_cstar, imp_mdot, imp_mdot_lox, imp_mdot_fuel, imp_Tthroat, \
-           imp_pthroat, imp_uexhaust, imp_athroat, imp_rthroat, imp_achamber, \
+           imp_pthroat, imp_athroat, imp_rthroat, imp_achamber, \
            imp_rchamber, imp_aexit, imp_rexit, imp_rn, imp_rb, imp_vc, \
            imp_lnozzle, imp_lcyl
            
 ###############################################################################
     
-def constants(MW,gamma,Tc,pe,pa,pc,area_ratio):
+def constants(MW,gamma,Tc):
     
     R = Rbar/MW
     
     cstar = np.sqrt((R * Tc/gamma)*((gamma+1)/2)**((gamma+1)/(gamma-1)))
     
+    return R, cstar
+
+###############################################################################
+    
+def performance(gamma,pe,pc,pa,area_ratio,R,cstar):
     Ct = np.sqrt(((2*gamma**2)/(gamma-1))*(2/(gamma+1))**((gamma+1)/(gamma-1))* \
                  (1 - (pe/pc)**((gamma-1)/gamma))) + (pe-pa)/pc * area_ratio
                  
     Isp = Ct * cstar/g
     
-    return R, cstar, Ct, Isp
+    return Ct, Isp
 
 ###############################################################################
     
@@ -88,18 +93,20 @@ def throat_properties(Tc,pc,gamma):
     Tthroat = Tc/(1 + (gamma-1)/2)
     
     pthroat = pc * (2/(gamma+1))**(gamma/(gamma-1))
-
+    
     return Tthroat, pthroat
 
 ###############################################################################
     
-def exit_properties(gamma,R,Tc,pc,pa,pe):
+#def exit_properties(gamma,R,Tc,pc,pa,pe):
     
-    uexhaust = np.sqrt(((2*gamma*R*Tc)/(gamma-1))* (1-(pe/pc)**((gamma-1)/gamma)))
+#    uexhaust = np.sqrt(((2*gamma*R*Tc)/(gamma-1))* (1-(pe/pc)**((gamma-1)/gamma)))
     
-    Ma_exit = np.sqrt(2/(gamma-1)*((pc/pa)**((gamma-1)/(gamma-1))))
+#    asound = np.sqrt(gamma*R*Tc)
     
-    return uexhaust, Ma_exit
+#    Ma_exit = uexhaust/asound
+    
+#    return uexhaust, Ma_exit
 
 ###############################################################################
     
@@ -126,10 +133,12 @@ def chamber_geometry(Athroat,contraction_ratio):
 
 ###############################################################################
     
-def exit_geometry(gamma,Ma_exit):
+def exit_geometry(gamma,Athroat,pe,pc):
     
-    Aexit = \
-    (1/(2*(gamma+1))*(1+(gamma+1)/2*Ma_exit**2))**((gamma+1)/2*(gamma-1))/Ma_exit
+    expansion_ratio = (2/(gamma+1))**(1/(gamma-1)) * (pc/pe)**(1/gamma) \
+   / ( (gamma+1)/(gamma-1) * (1 - (pe/pc)**(1-1/gamma)) )**.5 
+    
+    Aexit = Athroat * expansion_ratio
     
     rexit = np.sqrt(Aexit/np.pi)
     
@@ -163,47 +172,49 @@ def nozzle_length(dthroat,aexit,athroat,alphad,adj_coeff,Vc,Ac,rc,rt,betad):
     
     l_nozzle = l * adj_coeff
     
-    l_cylinder = Vc/Ac - (rc-rt)*np.atan(beta)
+    l_cylinder = Vc/Ac - (rc-rt)*np.arctan(beta)
     
     return l_nozzle, l_cylinder
 
 ###############################################################################
     
 def engine_calculator(MW,gamma,Tci,pei,pai,pci,area_ratio,thrusti,MR,\
-                      contraction_ratio, Lstar, alphad, betad, adj_coeff):
+                      contraction_ratio, Lstari, alphad, betad, adj_coeff):
     
-    thrust_m, Tc_m, pc_m, pa_m, pe_m = imp2metric(thrusti,Tci,pci,pai,pei)
+    thrust_m, Tc_m, pc_m, pa_m, pe_m, Lstar_m = imp2metric(thrusti,Tci,pci,pai,pei,Lstari)
     
-    R_m, cstar_m, Ct, Isp = constants(MW,gamma,Tc_m,pe_m,pa_m,pc_m,area_ratio)
+    R_m, cstar_m = constants(MW,gamma,Tc_m)
+    
+    Ct, Isp = performance(gamma,pe_m,pc_m,pa_m,area_ratio,R_m,cstar_m)
     
     mdot_m, mdot_lox_m, mdot_fuel_m = massflow(thrust_m,Isp,MR)
     
     Tthroat_m, pthroat_m = throat_properties(Tc_m,pc_m,gamma)
     
-    uexhaust_m, Ma_exit = exit_properties(gamma,R_m,Tc_m,pc_m,pa_m,pe_m)
+#    uexhaust_m, Ma_exit = exit_properties(gamma,R_m,Tc_m,pc_m,pa_m,pe_m,tstag_m)
     
     Athroat_m, rthroat_m, dthroat_m = throat_geometry(cstar_m,mdot_m,pc_m)
     
     Achamber_m, rchamber_m, dchamber_m = chamber_geometry(Athroat_m,contraction_ratio)
     
-    Aexit_m, rexit_m, dexit_m = exit_geometry(gamma,Ma_exit)
+    Aexit_m, rexit_m, dexit_m = exit_geometry(gamma,Athroat_m,pe_m,pc_m)
     
-    rn_m, rb_m, expansion_ratio, Vol_chamber_m = misc_char(rthroat_m,Aexit_m,Athroat_m,Lstar)
+    rn_m, rb_m, expansion_ratio, Vol_chamber_m = misc_char(rthroat_m,Aexit_m,Athroat_m,Lstar_m)
     
     l_nozzle_m, l_cyl_m = nozzle_length(dthroat_m,Aexit_m,Athroat_m,alphad,adj_coeff,\
                                     Vol_chamber_m,Achamber_m,rchamber_m,rthroat_m,betad)
     
-    cstar, mdot, mdot_oxidizer, mdot_fuel, Tthroat, pthroat, uexhaust, \
+    cstar, mdot, mdot_oxidizer, mdot_fuel, Tthroat, pthroat, \
     Athroat, rthroat, Achamber, rchamber, Aexit, rexit, rn, rb, Vol_chamber, \
     l_nozzle, l_cyl = metric2imp(cstar_m,mdot_m,mdot_lox_m,mdot_fuel_m,\
-                                 Tthroat_m,pthroat_m,uexhaust_m, Athroat_m, \
+                                 Tthroat_m,pthroat_m, Athroat_m, \
                                  rthroat_m, Achamber_m, rchamber_m, Aexit_m, \
                                  rexit_m, rn_m, rb_m, Vol_chamber_m, \
                                  l_nozzle_m, l_cyl_m)  
            
            
     return cstar, Ct, Isp, mdot, mdot_oxidizer, mdot_fuel, Tthroat, \
-           pthroat, uexhaust, Ma_exit, Athroat, rthroat, Achamber, rchamber, \
+           pthroat, Athroat, rthroat, Achamber, rchamber, \
            Aexit, rexit, rn, rb, expansion_ratio, Vol_chamber, l_nozzle, l_cyl
            
 ###############################################################################
@@ -213,7 +224,7 @@ def engine_excel_writer(MW,gamma,Tci,pei,pai,pci,area_ratio,thrusti,MR,\
                       filename):
     
     cstar, Ct, Isp, mdot, mdot_oxidizer, mdot_fuel, Tthroat, \
-    pthroat, uexhaust, Ma_exit, Athroat, rthroat, Achamber, rchamber, \
+    pthroat, Athroat, rthroat, Achamber, rchamber, \
     Aexit, rexit, rn, rb, expansion_ratio, Vol_chamber, l_nozzle, l_cyl = \
     \
     engine_calculator(MW,gamma,Tci,pei,pai,pci,area_ratio,thrusti,MR,\
@@ -221,7 +232,7 @@ def engine_excel_writer(MW,gamma,Tci,pei,pai,pci,area_ratio,thrusti,MR,\
     
     workbook = xlsxwriter.Workbook(filename)
 ###############################################################################    
-    Constants = workbook.add_worksheet('Constants and Performance Characteristics')
+    Constants = workbook.add_worksheet('Characteristics')
     
     Constants.write('A1','Characteristic Velocity')
     Constants.write('A2','Coefficient of Thrust')
@@ -253,18 +264,12 @@ def engine_excel_writer(MW,gamma,Tci,pei,pai,pci,area_ratio,thrusti,MR,\
     
     Properties.write('A1','Throat Temperature')
     Properties.write('A2','Throat Pressure')
-    Properties.write('A3','Exhaust Velocity')
-    Properties.write('A4','Mach number at exit')
     
     Properties.write('B1',Tthroat)
     Properties.write('B2',pthroat)
-    Properties.write('B3',uexhaust)
-    Properties.write('B4',Ma_exit)
     
     Properties.write('C1','Rankine')
     Properties.write('C2','psi')
-    Properties.write('C3','ft/s')
-    Properties.write('C4','Unitless')
 ###############################################################################   
     Geometry = workbook.add_worksheet('Engine Geometry')
     
@@ -299,7 +304,11 @@ def engine_excel_writer(MW,gamma,Tci,pei,pai,pci,area_ratio,thrusti,MR,\
     Geometry.write('C5','in')
     Geometry.write('C6','in')
     Geometry.write('C7','in^2')
-    Geometry.write('C8','in^2')
+    Geometry.write('C8','in')
     Geometry.write('C9','in^3')
     Geometry.write('C10','in')
     Geometry.write('C10','in')
+    Geometry.write('C11','in')
+    
+###############################################################################
+    workbook.close()    

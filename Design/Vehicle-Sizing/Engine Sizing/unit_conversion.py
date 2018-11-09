@@ -14,6 +14,9 @@ def unit_converter_met(vectortype,value):
     
     if vectortype == 'pressure':
         return value * 6894.757
+    
+    if vectortype == 'length':
+        return value * 0.0254
 
 def unit_converter_imp(vectortype,value):    
     if vectortype == 'velocity':
