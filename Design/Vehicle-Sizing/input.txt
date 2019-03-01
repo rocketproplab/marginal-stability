@@ -1,6 +1,6 @@
-propellant_tank_diameter: 8
+propellant_tank_diameter: 12
 propellant_tank_pressure: 750
 factor_of_safety: 4
-pressurant_tank_diameter: 6
+pressurant_tank_diameter: 10
 pressurant_tank_initial_pressure: 4500
 pressurant_tank_final_pressure: 50

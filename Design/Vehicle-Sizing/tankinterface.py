@@ -46,7 +46,7 @@ final_press = float(press_fpress_stuff[1])
 
 file.close() # closes the input file once everything's read in
 
-testtank = tanksim.tank(diam,lox_press,fos,press_tank_diam,initial_press,final_press,438,196)
+testtank = tanksim.tank(diam,lox_press,fos,press_tank_diam,initial_press,final_press,796.618,357.228)
 tankSpecs = testtank.tankCalc()
 pressSpecs = testtank.pressTankCalc()
 
@@ -66,6 +66,8 @@ print('The total mass is ' + str(round(tank_mass, 3)) + ' lbs')
 print('The total tank height is ' + str(round(total_height, 3)) + ' in')
 print('The LOx tank is ' + str(round(lox_height, 3)) + ' in high')
 print('The RP-1 tank is ' + str(round(rp1_height, 3)) + ' in high')
+print(tank_mass * lox_height / total_height)
+print(tank_mass * rp1_height / total_height)
 
 print('The helium tank diameter is ' + str(press_tank_diam) + ' in')
 print('The volume of helium needed is ' + str(round(press_vol, 3)) + ' in^3')

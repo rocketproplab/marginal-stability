@@ -46,7 +46,7 @@ def main():
     helium = pdc.helium()
 
     #=========MANIPULATE THESE VALUES FOR PRESSURE DROP FUNCTION===========
-    pressure = 1000 #Max tank pressure in psi
+    pressure = 500 #Max tank pressure in psi
     stress = 31200 #yield strength of material, psi
     fos = 1.5 #factor of safety
     pipe_roughness = 0.00059055118 #converted mm to inches - http://www.enggcyclopedia.com/2011/09/absolute-roughness/
