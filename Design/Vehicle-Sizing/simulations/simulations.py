@@ -82,7 +82,7 @@ class Rocket(object):
         self.burntime = burntime
         self.timestep = timestep
         self.CONST()
-        self.atm = atm()
+        #self.atm = atm()
         self.unit = unit()
 
     def run(self, stopTime=None, stopApogee=None):
@@ -161,7 +161,7 @@ class Rocket(object):
         return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho, self.temp)
 
     def calc_Cd(self, M):
-        return .75
+        return .55
 
     def calc_drag(self, vel, rho, S, Cd):
         return 1/2*rho*vel**2*S*Cd
@@ -411,7 +411,7 @@ def test_Rocket():
 
     return 0
 
-class atm(object):
+'''class atm(object):
     def __init__(self):
         self.molWeight = 28.9644
         self.g = 9.8
@@ -507,7 +507,7 @@ class atm(object):
     def getDensity(self, geAlt):
         temp = self.getTempK(geAlt)
         pressure = self.getPressure(geAlt)
-        return pressure * self.molWeight /(self.R * temp)
+        return pressure * self.molWeight /(self.R * temp)'''
 
 class unit(object):
     def kgToLb(self, kg):
