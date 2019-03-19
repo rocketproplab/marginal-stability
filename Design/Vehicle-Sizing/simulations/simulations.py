@@ -19,7 +19,7 @@ class Rocket(object):
     A list of assumptions, capabilities, and limitations
     will be added here as features are solidified. """
 
-    def __init__(self, initialConditions, engines, burntime, timestep=1):
+    def __init__(self, initialConditions, engines, burntime, timestep=0.5):
         """ Initialization of the Rocket simulation class
 
         Args:
@@ -123,6 +123,8 @@ class Rocket(object):
         self.reference_area  = self.initialConditions['reference_area']
 
         self.runIter = 0  # iterator
+        self.apogee = False
+
         while True:
             self.time.append(self.time[self.runIter] + self.timestep)
             self.R.append(self.Rearth + self.altitude[self.runIter])
@@ -150,7 +152,10 @@ class Rocket(object):
             self.flight_angle.append(self.flight_angle[0])      # initial values until calcs added
             self.thrust_angle.append(self.thrust_angle[0])
             self.Cd.append(self.Cd[0])
-            if self.runIter <= self.burntime * 2:
+            if self.velocity[self.runIter] < 0:
+                self.apogee = True
+
+            if not self.apogee:
                 self.dynamic_pressure.append(self.maxQ(rho))
 
             # END CONDITIONS
@@ -161,7 +166,7 @@ class Rocket(object):
         return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho, self.temp)
 
     def calc_Cd(self, M):
-        return .55
+        return .52
 
     def calc_drag(self, vel, rho, S, Cd):
         return 1/2*rho*vel**2*S*Cd
