@@ -108,6 +108,7 @@ class Rocket(object):
         self.dynamic_pressure   = [0]
         self.rho                = [self.STDATM(self.initialConditions['altitude'])[1]]
         self.temp               = [self.STDATM(self.initialConditions['altitude'])[0]]
+        self.M                  = [0]
 
         # initialize arrays with values from engines
         self.nengines           = self.engines['nengines']
@@ -132,8 +133,8 @@ class Rocket(object):
             self.rho.append(rho)
             self.temp.append(T)
 
-            M = self.velocity[self.runIter]/sos
-            Cd = self.calc_Cd(M)
+            self.M.append(self.velocity[self.runIter]/sos)
+            Cd = self.calc_Cd(self.M[self.runIter])
 
             # calculate altitude, velocity, and acceleration
             self.altitude.append(self.altitude[self.runIter] + self.calc_dalt())
@@ -163,7 +164,7 @@ class Rocket(object):
                 break
 
             self.runIter += 1
-        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho, self.temp)
+        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho, self.temp, self.M)
 
     def calc_Cd(self, M):
         return .52
