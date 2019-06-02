@@ -5,7 +5,7 @@ import numpy as np
 # tank dimensions found in Chapter 8
 
 ## Lists all required constants and values required for math-ing
-def getTankMass(pressure, diameter, propMass):
+def getTankMass(pressure, diameter, propMass, hePress):
     P = pressure  #input tank pressure in psig
 
     pi = np.pi
@@ -119,7 +119,7 @@ def getTankMass(pressure, diameter, propMass):
     press_temp = 536.67  #pressurant temp in Rankine
     R = 10.73159*12**3  #gas constant in imperial units, in3-psi / R-lb-mol
     molar_mass = 4.003
-    initial_press = 6000  #initial pressure in bottle, psi
+    initial_press = hePress  #initial pressure in bottle, psi
     final_press = P  #final pressure at burnout, psi
     press_tank_diam = 11.198  #outer diameter of pressurant tank, in, based on Ray's SW model
 
