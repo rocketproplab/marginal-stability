@@ -74,7 +74,7 @@ def get_wall_mass(pressure,diameter,volume):
     cylheight = leftovervol / (pi * a**2)
     w_cyl = cylheight * pi * (R**2 - a**2) * rho_alum
 
-    print(w_cyl)
+    #print(cylheight + 2*(b+tcr))
 
     return w_cyl
 
