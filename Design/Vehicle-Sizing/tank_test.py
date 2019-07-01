@@ -1,3 +1,3 @@
-import tank_sizing_2_23 as tank
+import tank_sizing_7_1 as tank
 
-print(tank.getTankMass(600,12,1166.271,6000))
+print(tank.getTankMass(700,600,12,1180.80,6000))
