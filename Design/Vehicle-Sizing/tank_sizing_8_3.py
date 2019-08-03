@@ -118,11 +118,9 @@ def getTankMass(rp1Press, loxPress, diameter, propMass, hePress):
     ## Computes weights of tank segments also based on given equations
     #pi*(outer_diameter**2 - inner_diameter**2) * height * rho_alum / 4
     # weight of bulkheads in lbm for calculating--from SolidWorks
-    loxupper_weight = 5.83
-    loxlower_weight = 5.17
-    rp1upper_weight = 5.29
-    rp1lower_weight = 5.65
-    w_endcaps = loxupper_weight + loxlower_weight + rp1upper_weight + rp1lower_weight
+    lox_bulkhead_weights = 11.68
+    rp1_bulkhead_weights = 10.94
+    w_endcaps = lox_bulkhead_weights + rp1_bulkhead_weights
 
     #weight of respective cylindrical sections
     w_cyl_rp1 = get_wall_mass(rp1Press,diameter,vol_rp1)
