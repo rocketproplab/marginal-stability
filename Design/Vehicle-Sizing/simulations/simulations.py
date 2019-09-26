@@ -2,6 +2,8 @@
 Simulations is a python based flight simulation package
 for rocket and missle trajectory analysis. """
 import numpy as np
+import csv
+from scipy import interpolate as inter
 
 __author__ = "Cameron Flannery"
 __copyright__ = "Copyright 2018"
@@ -18,6 +20,25 @@ class Rocket(object):
 
     A list of assumptions, capabilities, and limitations
     will be added here as features are solidified. """
+
+    def import_thrust_vec(self):
+        unit_convert = unit()
+        tlist = []
+        alist = []
+        with open('simulations/ThrustAlt.csv') as csvfile:
+            tareader = csv.reader(csvfile)
+            names = False
+            for i in tareader:
+                if not names:
+                    names = True
+                else:
+                    tlist.append(float(i[0]))
+                    alist.append(unit_convert.mToFt(float(i[1])*1000))
+        return tlist, alist
+
+    def get_thrust(self,alt,t_list,a_list):
+        spline = inter.CubicSpline(a_list,t_list)
+        return spline(alt)
 
     def __init__(self, initialConditions, engines, burntime, timestep=0.5):
         """ Initialization of the Rocket simulation class
@@ -112,7 +133,8 @@ class Rocket(object):
 
         # initialize arrays with values from engines
         self.nengines           = self.engines['nengines']
-        self.thrust             = [self.engines['thrust_sl']*self.nengines]
+        self.t_vec, self.a_vec  = self.import_thrust_vec()
+        self.thrust             = [self.t_vec[0]]
         self.thrust_angle       = [self.engines['thrust_angle']]
         self.Ae                 = [self.engines['Ae']]
         self.Isp                = self.engines['Isp']
@@ -143,8 +165,10 @@ class Rocket(object):
             self.acceleration.append(self.calc_accel())
 
             # Thrust
+
             if self.time[self.runIter] <= self.burntime:
-                self.thrust.append(self.thrust[0])
+                self.thrust.append(self.get_thrust(self.altitude[self.runIter + 1], self.t_vec, self.a_vec))
+                print(self.thrust[self.runIter])
                 self.mass.append(self.mass[self.runIter] - self.mdot*self.timestep)
             else:
                 self.thrust.append(0)
@@ -554,6 +578,12 @@ class unit(object):
 
     def kgm3ToSlugFt3(self, kgm3):
         return kgm3 * 0.00194032
+
+    def inToMm(self, inch):
+        return inch*25.4
+
+    def mmToIn(self, mm):
+        return mm/25.4
 
 if __name__ == '__main__':
     test_Rocket()
