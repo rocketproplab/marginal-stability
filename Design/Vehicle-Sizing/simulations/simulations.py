@@ -103,7 +103,7 @@ class Rocket(object):
         self.burntime = burntime
         self.timestep = timestep
         self.CONST()
-        #self.atm = atm()
+        self.atm = atm()
         self.unit = unit()
 
     def run(self, stopTime=None, stopApogee=None):
@@ -341,8 +341,12 @@ class Rocket(object):
         self.gamma_air = 1.4    # ratio of specific heats
         self.Rearth = 2.0902 * 10**7   # [ft]
 
+    #Standard atmosphere interpolation:
+    def STDATM(self,alt):
+        return (self.atm.get_temp(alt),self.atm.get_rho(alt),self.atm.get_sos(alt))
+
     # standard atmosphere model (SI units)
-    def STDATM(self, altitude):
+    '''def STDATM(self, altitude):
         layer = -1.0            # gradient layer
         gradient = -self.unit.kToR(0.0019812)
         altitude_base = 0.0
@@ -392,16 +396,16 @@ class Rocket(object):
             density = density_base*np.exp(power)
         sos = np.sqrt(self.gamma_air*self.R_air*temperature)
 
-        '''meAlt = self.unit.ftToM(altitude)
+        meAlt = self.unit.ftToM(altitude)
         geAlt = self.atm.geopotentialAlt(meAlt)
         meDensity = self.atm.getDensity(geAlt)
         meTemp = self.atm.getTempK(geAlt)
         temperature = self.unit.kToR(meTemp)
         density = self.unit.kgm3ToSlugFt3(meDensity)
         meSos = np.sqrt(self.gamma_air*self.R_air*temperature)
-        sos = self.unit.mToFt(meSos)'''
+        sos = self.unit.mToFt(meSos)
 
-        return (temperature, density, sos)
+        return (temperature, density, sos)'''
 
 
 def test_Rocket():
@@ -440,6 +444,45 @@ def test_Rocket():
     altitude, velocity, acceleration, mass, time, thrust = itsatest.run()
 
     return 0
+
+class atm(object):
+    def __init__(self):
+        self.altlist = []
+        self.tlist = []
+        self.rholist = []
+        self.soslist = []
+        with open('simulations/atm.csv') as atmcsv:
+            atmreader = csv.reader(atmcsv)
+            names = False
+            for i in atmreader:
+                if not names:
+                    names = True
+                else:
+                    self.altlist.append(float(i[0]))
+                    self.tlist.append(float(i[1]))
+                    self.rholist.append(float(i[2]))
+                    self.soslist.append(float(i[3]))
+        self.tspline = inter.CubicSpline(self.altlist,self.tlist)
+        self.rhospline = inter.CubicSpline(self.altlist,self.rholist)
+        self.sosspline = inter.CubicSpline(self.altlist,self.soslist)
+
+    def get_temp(self,alt):
+        if alt < 150000:
+            return self.tspline(alt)
+        else:
+            return 0
+
+    def get_rho(self,alt):
+        if alt < 150000:
+            return self.rhospline(alt)
+        else:
+            return 0
+
+    def get_sos(self,alt):
+        if alt < 150000:
+            return self.tspline(alt)
+        else:
+            return 1000
 
 '''class atm(object):
     def __init__(self):
