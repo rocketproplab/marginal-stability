@@ -343,7 +343,10 @@ class Rocket(object):
 
     #Standard atmosphere interpolation:
     def STDATM(self,alt):
-        return (self.atm.get_temp(alt),self.atm.get_rho(alt),self.atm.get_sos(alt))
+        if alt < 250000:
+            return (self.atm.get_temp(alt),self.atm.get_rho(alt),self.atm.get_sos(alt))
+        else:
+            return (0,0,940)
 
     # standard atmosphere model (SI units)
     '''def STDATM(self, altitude):
@@ -467,22 +470,13 @@ class atm(object):
         self.sosspline = inter.CubicSpline(self.altlist,self.soslist)
 
     def get_temp(self,alt):
-        if alt < 150000:
-            return self.tspline(alt)
-        else:
-            return 0
+        return self.tspline(alt)
 
     def get_rho(self,alt):
-        if alt < 150000:
-            return self.rhospline(alt)
-        else:
-            return 0
+        return self.rhospline(alt)
 
     def get_sos(self,alt):
-        if alt < 150000:
-            return self.tspline(alt)
-        else:
-            return 1000
+        return self.tspline(alt)
 
 '''class atm(object):
     def __init__(self):
