@@ -346,7 +346,7 @@ class Rocket(object):
         if alt < 250000:
             return (self.atm.get_temp(alt),self.atm.get_rho(alt),self.atm.get_sos(alt))
         else:
-            return (0,0,940)
+            return (360,0,940)
 
     # standard atmosphere model (SI units)
     '''def STDATM(self, altitude):
