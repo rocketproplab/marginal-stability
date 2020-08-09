@@ -144,7 +144,7 @@ class Rocket(object):
 
         # initialize additional values
         self.acceleration    = [0]
-        self.R               = [self.Rearth]  # [m] initial distance to the center of the earth
+        self.R               = [self.Rearth + self.initialConditions['altitude']]  # [ft] initial distance to the center of the earth
         self.reference_area  = self.initialConditions['reference_area']
 
         self.runIter = 0  # iterator
@@ -192,7 +192,7 @@ class Rocket(object):
         return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho, self.temp, self.M)
 
     def calc_drag(self, vel, rho, S, Cd):
-        return 1/2*rho*vel**2*S*Cd
+        return (1/2)*rho*(vel**2)*S*Cd
 
     def calc_thrust(self, thrust_sl=None, Ae=None, pe=None, pa=None):
         """ calc_thrust determines the thrust """
@@ -213,12 +213,12 @@ class Rocket(object):
             based on the current timestep values.
 
         Args:
-            thrust:         # [N]
+            thrust:         # [lbf]
             thrust_angle:   # [rad] angle
-            drag:           # [N]
-            mass:           # [kg]
+            drag:           # [lbf]
+            mass:           # [slug]
             flight_heading:  # [rad] angle
-            R:              # [m] radius from center of the Earth
+            R:              # [ft] radius from center of the Earth
             timestep:        # [s] timestep
 
         Returns:
@@ -257,12 +257,12 @@ class Rocket(object):
             based on the current timestep values.
 
         Args:
-            thrust:         # [N]
+            thrust:         # [lbf]
             thrust_angle:   # [rad] angle
-            drag:           # [N]
-            mass:           # [kg]
+            drag:           # [lbf]
+            mass:           # [slug]
             flight_heading: # [rad] angle
-            R:              # [m] radius from center of the Earth
+            R:              # [ft] radius from center of the Earth
             timestep:       # [s] timestep
 
         Returns:
@@ -300,8 +300,8 @@ class Rocket(object):
             based on the current timestep values.
 
         Args:
-            velocity:       # [m/s] velocity at current timestep
-            flight_heading: # [m] radius from center of the Earth
+            velocity:       # [ft/s] velocity at current timestep
+            flight_heading: # [ft] radius from center of the Earth
             timestep:       # [s] timestep
 
         Returns:
@@ -354,7 +354,7 @@ def test_Rocket():
     g0 = 9.81
     mdot = nengines*thrust_sl/(g0*Isp)
     twratio = 50  # estimated thrust 2 weight ratio
-    mstructure = 300  # kg
+    mstructure = 300  # slug
     mpropulsion = thrust_sl/(twratio*g0)
     mpropellant = mdot*burntime
     mass = mpropulsion + mpropellant + mstructure
