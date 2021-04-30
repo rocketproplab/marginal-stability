@@ -2,6 +2,8 @@
 Simulations is a python based flight simulation package
 for rocket and missle trajectory analysis. """
 import numpy as np
+import csv
+from scipy import interpolate as inter
 
 __author__ = "Cameron Flannery"
 __copyright__ = "Copyright 2018"
@@ -19,7 +21,26 @@ class Rocket(object):
     A list of assumptions, capabilities, and limitations
     will be added here as features are solidified. """
 
-    def __init__(self, initialConditions, engines, burntime, timestep=1):
+    def import_thrust_vec(self):
+        unit_convert = unit()
+        tlist = []
+        alist = []
+        with open('simulations/ThrustAlt.csv') as csvfile:
+            tareader = csv.reader(csvfile)
+            names = False
+            for i in tareader:
+                if not names:
+                    names = True
+                else:
+                    tlist.append(float(i[0]))
+                    alist.append(unit_convert.mToFt(float(i[1])*1000))
+        return tlist, alist
+
+    def get_thrust(self,alt,t_list,a_list):
+        spline = inter.CubicSpline(a_list,t_list)
+        return spline(alt)
+
+    def __init__(self, initialConditions, engines, burntime, timestep=0.5):
         """ Initialization of the Rocket simulation class
 
         Args:
@@ -39,6 +60,7 @@ class Rocket(object):
                 lift_coefficient,   # [1]
                 bank_angle          # [rad]
                 reference_area      # [ft^2]
+                coef_drag           # [dimensionless]
 
             engines:
             -> Required keywords:
@@ -71,6 +93,7 @@ class Rocket(object):
             'Ae',
             'Isp',
             'reference_area',
+            'coef_drag'
         ]
 
         for arg in requiredArgs:
@@ -82,7 +105,7 @@ class Rocket(object):
         self.burntime = burntime
         self.timestep = timestep
         self.CONST()
-        #self.atm = atm()
+        self.atm = atm()
         self.unit = unit()
 
     def run(self, stopTime=None, stopApogee=None):
@@ -103,15 +126,17 @@ class Rocket(object):
         self.mass               = [self.initialConditions['mass']]
         self.lift_coefficient   = [self.initialConditions['lift_coefficient']]
         self.bank_angle         = [self.initialConditions['bank_angle']]
-        self.Cd                 = [self.calc_Cd(0)]
+        self.Cd                 = self.initialConditions['coef_drag']
         self.drag               = [0]
         self.dynamic_pressure   = [0]
         self.rho                = [self.STDATM(self.initialConditions['altitude'])[1]]
         self.temp               = [self.STDATM(self.initialConditions['altitude'])[0]]
+        self.M                  = [0]
 
         # initialize arrays with values from engines
         self.nengines           = self.engines['nengines']
-        self.thrust             = [self.engines['thrust_sl']*self.nengines]
+        self.t_vec, self.a_vec  = self.import_thrust_vec()
+        self.thrust             = [self.t_vec[0]]
         self.thrust_angle       = [self.engines['thrust_angle']]
         self.Ae                 = [self.engines['Ae']]
         self.Isp                = self.engines['Isp']
@@ -119,10 +144,12 @@ class Rocket(object):
 
         # initialize additional values
         self.acceleration    = [0]
-        self.R               = [self.Rearth]  # [m] initial distance to the center of the earth
+        self.R               = [self.Rearth + self.initialConditions['altitude']]  # [ft] initial distance to the center of the earth
         self.reference_area  = self.initialConditions['reference_area']
 
         self.runIter = 0  # iterator
+        self.apogee = False
+
         while True:
             self.time.append(self.time[self.runIter] + self.timestep)
             self.R.append(self.Rearth + self.altitude[self.runIter])
@@ -130,18 +157,20 @@ class Rocket(object):
             self.rho.append(rho)
             self.temp.append(T)
 
-            M = self.velocity[self.runIter]/sos
-            Cd = self.calc_Cd(M)
+            self.M.append(self.velocity[self.runIter]/sos)
 
             # calculate altitude, velocity, and acceleration
             self.altitude.append(self.altitude[self.runIter] + self.calc_dalt())
             self.velocity.append(self.velocity[self.runIter] + self.calc_deltaV())
-            self.drag.append(self.calc_drag(self.velocity[self.runIter], rho, self.reference_area, Cd))
+            self.drag.append(self.calc_drag(self.velocity[self.runIter], rho, self.reference_area, self.Cd))
+            #print(str(self.Cd) + str(self.drag[self.runIter]))
             self.acceleration.append(self.calc_accel())
 
             # Thrust
+
             if self.time[self.runIter] <= self.burntime:
-                self.thrust.append(self.thrust[0])
+                self.thrust.append(self.get_thrust(self.altitude[self.runIter + 1], self.t_vec, self.a_vec))
+                print(self.thrust[self.runIter])
                 self.mass.append(self.mass[self.runIter] - self.mdot*self.timestep)
             else:
                 self.thrust.append(0)
@@ -149,8 +178,10 @@ class Rocket(object):
             self.flight_heading.append(self.flight_heading[0])  # initial values until calcs added
             self.flight_angle.append(self.flight_angle[0])      # initial values until calcs added
             self.thrust_angle.append(self.thrust_angle[0])
-            self.Cd.append(self.Cd[0])
-            if self.runIter <= self.burntime * 2:
+            if self.velocity[self.runIter] < 0:
+                self.apogee = True
+
+            if not self.apogee:
                 self.dynamic_pressure.append(self.maxQ(rho))
 
             # END CONDITIONS
@@ -158,13 +189,10 @@ class Rocket(object):
                 break
 
             self.runIter += 1
-        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho, self.temp)
-
-    def calc_Cd(self, M):
-        return .55
+        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag, self.dynamic_pressure, self.rho, self.temp, self.M)
 
     def calc_drag(self, vel, rho, S, Cd):
-        return 1/2*rho*vel**2*S*Cd
+        return (1/2)*rho*(vel**2)*S*Cd
 
     def calc_thrust(self, thrust_sl=None, Ae=None, pe=None, pa=None):
         """ calc_thrust determines the thrust """
@@ -185,12 +213,12 @@ class Rocket(object):
             based on the current timestep values.
 
         Args:
-            thrust:         # [N]
+            thrust:         # [lbf]
             thrust_angle:   # [rad] angle
-            drag:           # [N]
-            mass:           # [kg]
+            drag:           # [lbf]
+            mass:           # [slug]
             flight_heading:  # [rad] angle
-            R:              # [m] radius from center of the Earth
+            R:              # [ft] radius from center of the Earth
             timestep:        # [s] timestep
 
         Returns:
@@ -229,12 +257,12 @@ class Rocket(object):
             based on the current timestep values.
 
         Args:
-            thrust:         # [N]
+            thrust:         # [lbf]
             thrust_angle:   # [rad] angle
-            drag:           # [N]
-            mass:           # [kg]
+            drag:           # [lbf]
+            mass:           # [slug]
             flight_heading: # [rad] angle
-            R:              # [m] radius from center of the Earth
+            R:              # [ft] radius from center of the Earth
             timestep:       # [s] timestep
 
         Returns:
@@ -272,8 +300,8 @@ class Rocket(object):
             based on the current timestep values.
 
         Args:
-            velocity:       # [m/s] velocity at current timestep
-            flight_heading: # [m] radius from center of the Earth
+            velocity:       # [ft/s] velocity at current timestep
+            flight_heading: # [ft] radius from center of the Earth
             timestep:       # [s] timestep
 
         Returns:
@@ -311,68 +339,12 @@ class Rocket(object):
         self.gamma_air = 1.4    # ratio of specific heats
         self.Rearth = 2.0902 * 10**7   # [ft]
 
-    # standard atmosphere model (SI units)
-    def STDATM(self, altitude):
-        layer = -1.0            # gradient layer
-        gradient = -self.unit.kToR(0.0019812)
-        altitude_base = 0.0
-        temperature_base = 518.67
-        density_base = 0.00237717
-
-        if altitude > 36089:
-            layer = 1.0       # isothermal layer
-            altitude_base = 36089
-            temperature_base = self.unit.kToR(216.65)
-            density_base = 0.000706208
-        if altitude > 65617:
-            layer = -1.0      # gradient layer
-            gradient = self.unit.kToR(0.0003048)
-            altitude_base = 65617
-            temperature_base = 216.65 * 9/5
-            density_base = 0.000170834
-        if altitude > 104987:
-            layer = -1.0       # gradient layer
-            gradient = self.unit.kToR(0.00085344)
-            altitude_base = 104987
-            temperature_base = 228.65*9/5
-            density_base = 0.0000256636
-        if altitude > 154199:
-            layer = 1.0      # isothermal layer
-            altitude_base = 154199
-            temperature_base = 270.65*9/5
-            density_base = 1.47056878 * (10**(-6))
-        if altitude > 167323:
-            layer = -1.0       # gradient layer
-            gradinet = -self.unit.kToR(0.00085344)
-            altitude_base = 167323
-            temperature_base = 270.65*9/5
-            density_base = 0.00000277025
-        if altitude > 232940:
-            layer = 1.0      # isothermal layer
-            altitude_base = 232940
-            temperature_base = 214.65*9/5
-            density_base = 1.24603 * (10**(-7))
-        if layer < 0.0:
-            temperature = temperature_base + gradient*(altitude - altitude_base)
-            power = -1.0*(self.g0/gradient/self.R_air + 1.0)
-            density = density_base*(temperature/temperature_base)**power
+    #Standard atmosphere interpolation:
+    def STDATM(self,alt):
+        if alt < 250000:
+            return (self.atm.get_temp(alt),self.atm.get_rho(alt),self.atm.get_sos(alt))
         else:
-            temperature = temperature_base
-            power = -1.0*self.g0*(altitude - altitude_base)/self.R_air/temperature
-            density = density_base*np.exp(power)
-        sos = np.sqrt(self.gamma_air*self.R_air*temperature)
-
-        '''meAlt = self.unit.ftToM(altitude)
-        geAlt = self.atm.geopotentialAlt(meAlt)
-        meDensity = self.atm.getDensity(geAlt)
-        meTemp = self.atm.getTempK(geAlt)
-        temperature = self.unit.kToR(meTemp)
-        density = self.unit.kgm3ToSlugFt3(meDensity)
-        meSos = np.sqrt(self.gamma_air*self.R_air*temperature)
-        sos = self.unit.mToFt(meSos)'''
-
-        return (temperature, density, sos)
-
+            return (360,0,940)
 
 def test_Rocket():
     burntime = 50  # s
@@ -382,7 +354,7 @@ def test_Rocket():
     g0 = 9.81
     mdot = nengines*thrust_sl/(g0*Isp)
     twratio = 50  # estimated thrust 2 weight ratio
-    mstructure = 300  # kg
+    mstructure = 300  # slug
     mpropulsion = thrust_sl/(twratio*g0)
     mpropellant = mdot*burntime
     mass = mpropulsion + mpropellant + mstructure
@@ -411,103 +383,35 @@ def test_Rocket():
 
     return 0
 
-'''class atm(object):
+class atm(object):
     def __init__(self):
-        self.molWeight = 28.9644
-        self.g = 9.8
-        self.R = 8.314
+        self.altlist = []
+        self.tlist = []
+        self.rholist = []
+        self.soslist = []
+        with open('simulations/atm.csv') as atmcsv:
+            atmreader = csv.reader(atmcsv)
+            names = False
+            for i in atmreader:
+                if not names:
+                    names = True
+                else:
+                    self.altlist.append(float(i[0]))
+                    self.tlist.append(float(i[1]))
+                    self.rholist.append(float(i[2]))
+                    self.soslist.append(float(i[3]))
+        self.tspline = inter.CubicSpline(self.altlist,self.tlist)
+        self.rhospline = inter.CubicSpline(self.altlist,self.rholist)
+        self.sosspline = inter.CubicSpline(self.altlist,self.soslist)
 
-    def getTempK(self, geAlt):
-        temp = 288.15
-        if 0 < geAlt < 11000:
-            temp = 288.15 - 0.0065 * geAlt
-        elif geAlt < 20000:
-            temp = 216.65
-        elif geAlt < 32000:
-            temp = 216.65 + 0.001 * geAlt
-        elif geAlt < 47000:
-            temp = 228.65 + 0.0028 * geAlt
-        elif geAlt < 51000:
-            temp = 270.65
-        elif geAlt < 71000:
-            temp = 270.65 - 0.0028 * geAlt
-        elif geAlt >= 71000:
-            temp = 214.65 - 0.002 * geAlt
-        return temp
+    def get_temp(self,alt):
+        return self.tspline(alt)
 
-    def getTempGrad(self, geAlt):
-        if geAlt < 11000:
-            return 0.0065
-        elif geAlt < 20000:
-            return 0
-        elif geAlt < 32000:
-            return -0.001
-        elif geAlt < 47000:
-            return -0.0028
-        elif geAlt < 51000:
-            return 0
-        elif geAlt < 71000:
-            return 0.0028
-        elif geAlt >= 71000:
-            return 0.002
+    def get_rho(self,alt):
+        return self.rhospline(alt)
 
-    #Using this corrected altitude instead of the actual altitude allows us to
-    #treat gravity as constant. It is a fairly small difference at low
-    #altitudes, since gravity doesn't change very quickly
-    def geopotentialAlt(self,alt):
-        return alt
-
-    def getBasePress(self, geAlt):
-        if geAlt < 11000:
-            return 101325
-        elif geAlt < 20000:
-            return 22632.1
-        elif geAlt < 32000:
-            return 5474.89
-        elif geAlt < 47000:
-            return 868.019
-        elif geAlt < 51000:
-            return 110.906
-        elif geAlt < 71000:
-            return 66.9389
-        else:
-            return 3.95642
-
-    def getBaseAlt(self, geAlt):
-        if geAlt < 11000:
-            return 0
-        elif geAlt < 20000:
-            return 11000
-        elif geAlt < 32000:
-            return 20000
-        elif geAlt < 47000:
-            return 32000
-        elif geAlt < 51000:
-            return 47000
-        elif geAlt < 71000:
-            return 51000
-        else:
-            return 71000
-
-    def getPressure(self, geAlt):
-        temp = self.getTempK(geAlt)
-        baseAlt = self.getBaseAlt(geAlt)
-        baseTemp = self.getTempK(baseAlt)
-        basePress = self.getBasePress(geAlt)
-        tempGrad = self.getTempGrad(geAlt)
-        if tempGrad == 0:
-            num = -self.g * self.molWeight * (geAlt - baseAlt)
-            den = self.R * baseTemp
-            return basePress * np.exp(num/den)
-        else:
-            num = -self.g * self.molWeight
-            den = self.R * tempGrad
-            return basePress * (temp / baseTemp)**(num/den)
-
-    def getDensity(self, geAlt):
-        temp = self.getTempK(geAlt)
-        pressure = self.getPressure(geAlt)
-        return pressure * self.molWeight /(self.R * temp)'''
+    def get_sos(self,alt):
+        return self.tspline(alt)
 
 class unit(object):
     def kgToLb(self, kg):
@@ -548,6 +452,12 @@ class unit(object):
 
     def kgm3ToSlugFt3(self, kgm3):
         return kgm3 * 0.00194032
+
+    def inToMm(self, inch):
+        return inch*25.4
+
+    def mmToIn(self, mm):
+        return mm/25.4
 
 if __name__ == '__main__':
     test_Rocket()
